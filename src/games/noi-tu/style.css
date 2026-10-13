@@ -1,0 +1,927 @@
+/* ============================================================
+   NỐI TỪ - BÀN ĐẤU THI ĐẤU (TABLE ARENA)
+   Thiết kế tối giản, viền mỏng, màu xanh lá chủ đạo (Emerald)
+   ============================================================ */
+
+:root {
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --primary-dark: #047857;
+  --primary-light: #ecfdf5;
+  --primary-border: #a7f3d0;
+  --primary-glow: rgba(16, 185, 129, 0.25);
+
+  --bg-game: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-table: #f0fdf4;
+  --bg-table-rim: #dcfce7;
+
+  --border-c: #e2e8f0;
+  --border-dark: #cbd5e1;
+  --border-green: #10b981;
+
+  --text-dark: #0f172a;
+  --text-muted: #64748b;
+
+  --danger: #ef4444;
+  --danger-light: #fef2f2;
+  --danger-border: #fecaca;
+
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+  --shadow-glow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-game);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--text-dark);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   1. HEADER
+   ============================================================ */
+.game-header {
+  flex-shrink: 0;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-c);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 30;
+}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+}
+
+.btn-icon-neu {
+  width: 36px;
+  height: 36px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-c);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.btn-icon-neu:hover {
+  background-color: var(--primary-light);
+  border-color: var(--primary-border);
+}
+
+.btn-icon-neu:active {
+  transform: scale(0.96);
+}
+
+.btn-time-neu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--bg-game);
+  border: 1px solid var(--border-c);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-time-neu:hover {
+  border-color: var(--primary-border);
+  background-color: var(--primary-light);
+}
+
+.user-score-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--bg-game);
+  border: 1px solid var(--border-c);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.player-avatar-small {
+  font-size: 1.15rem;
+}
+
+.player-name-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.current-score-badge {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  border: 1px solid var(--primary-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Mode Switcher Tabs */
+.mode-switcher-bar {
+  display: flex;
+  padding: 4px 14px 6px;
+  gap: 8px;
+}
+
+.mode-tab-btn {
+  flex: 1;
+  padding: 6px 12px;
+  background-color: var(--bg-game);
+  border: 1px solid var(--border-c);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-tab-btn:hover {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.mode-tab-btn.active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
+}
+
+/* Header Timer Bar */
+.timer-container {
+  width: 100%;
+  height: 3px;
+  background-color: var(--border-c);
+  overflow: hidden;
+}
+
+.timer-bar {
+  width: 100%;
+  height: 100%;
+  background-color: var(--primary);
+  transition: width 0.1s linear, background-color 0.25s ease;
+}
+
+/* ============================================================
+   2. BÀN THI ĐẤU (TABLE ARENA CONTAINER)
+   ============================================================ */
+.table-arena-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  overflow: hidden;
+  gap: 10px;
+  background-color: var(--bg-game);
+}
+
+/* Thanh tóm tắt thông tin bàn đấu */
+.table-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border: 1px solid var(--border-c);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.meta-players {
+  color: var(--text-dark);
+  font-weight: 700;
+}
+
+.status-indicator-dot {
+  width: 7px;
+  height: 7px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Khung bàn chơi */
+.poker-table-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.game-table {
+  width: 100%;
+  height: 100%;
+  max-width: 450px;
+  background: radial-gradient(circle at center, #f0fdf4 0%, #ecfdf5 70%, #dcfce7 100%);
+  border: 1.5px solid var(--primary-border);
+  border-radius: 24px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================================
+   3. CÁC GHẾ NGỒI QUANH BÀN (TABLE SEATS)
+   ============================================================ */
+.table-seats-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 60px;
+  z-index: 5;
+}
+
+.top-seats {
+  padding-bottom: 2px;
+}
+
+.bottom-seats {
+  padding-top: 2px;
+}
+
+/* Hàng giữa bàn: Cánh trái (9h) - Tâm bàn - Cánh phải (3h) */
+.table-mid-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  gap: 6px;
+  position: relative;
+}
+
+.table-side-seat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-width: 68px;
+  max-width: 82px;
+  z-index: 5;
+}
+
+.table-side-seat:empty {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  display: none;
+}
+
+/* Player Seat Card */
+.player-seat {
+  background-color: #ffffff;
+  border: 1px solid var(--border-c);
+  border-radius: 12px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 110px;
+  max-width: 160px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Ghế ở 2 bên cánh (9h và 3h): hiển thị dọc tinh tế */
+.player-seat.side-seat {
+  flex-direction: column;
+  padding: 6px 4px;
+  min-width: 64px;
+  max-width: 78px;
+  text-align: center;
+  gap: 3px;
+}
+
+.player-seat.side-seat .seat-meta {
+  align-items: center;
+  width: 100%;
+}
+
+.player-seat.side-seat .seat-name {
+  max-width: 62px;
+  font-size: 0.72rem;
+}
+
+.player-seat.side-seat .seat-stat {
+  font-size: 0.65rem;
+}
+
+/* Ghế Hướng 6h (Vị trí mặc định của Bạn): nổi bật và cân đối */
+.bottom-seats .player-seat.is-me {
+  min-width: 170px;
+  max-width: 240px;
+  padding: 7px 14px;
+  background-color: #ffffff;
+  border: 1.5px solid var(--primary-border);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+}
+
+.seat-clock-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  background-color: var(--bg-game);
+  border: 1px solid var(--border-c);
+  border-radius: 4px;
+  padding: 0 4px;
+  color: var(--text-muted);
+}
+
+.player-seat.is-me .seat-clock-tag {
+  background-color: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary-dark);
+}
+
+/* Đến lượt người này đánh: Viền xanh và vòng phát sáng */
+.player-seat.is-turn {
+  border-color: var(--primary) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25), 0 2px 8px rgba(16, 185, 129, 0.15) !important;
+  transform: translateY(-2px);
+}
+
+/* Người bị loại: mờ xám */
+.player-seat.is-dead {
+  opacity: 0.45;
+  filter: grayscale(1);
+  background-color: #f1f5f9;
+  border-color: var(--border-c);
+}
+
+.seat-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.seat-avatar {
+  width: 34px;
+  height: 34px;
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+.seat-turn-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--primary);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+}
+
+.seat-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  line-height: 1.25;
+}
+
+.seat-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.seat-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seat-host-badge {
+  font-size: 0.65rem;
+  color: #d97706;
+}
+
+.seat-stat {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.seat-status-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.seat-status-turn {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  border: 1px solid var(--primary-border);
+}
+
+.seat-status-dead {
+  background-color: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid var(--danger-border);
+}
+
+/* ============================================================
+   4. TÂM BÀN THI ĐẤU (TABLE CENTER FELT)
+   ============================================================ */
+.table-center-felt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 10px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Đồng hồ số tròn ở tâm bàn */
+.center-timer-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-timer-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1.5px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.center-timer-val {
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.center-timer-unit {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* Thẻ từ hiện tại to và nổi bật ở tâm bàn */
+.center-word-spotlight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+}
+
+.word-spotlight-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.center-word-card {
+  background-color: #ffffff;
+  border: 1px solid var(--primary-border);
+  border-radius: 14px;
+  padding: 8px 24px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+  text-transform: capitalize;
+  text-align: center;
+  letter-spacing: 0.3px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Thẻ chỉ báo tiếng tiếp theo */
+.center-target-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border-c);
+  border-radius: 999px;
+  padding: 3px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.target-syllable-badge {
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  color: var(--primary-dark);
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+/* Mạch liên kết các từ gần nhất */
+.recent-chain-flow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 90%;
+  margin-top: 2px;
+}
+
+.chain-chip {
+  background-color: #ffffff;
+  border: 1px solid var(--border-c);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.chain-chip.active {
+  background-color: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.chain-arrow {
+  font-size: 0.65rem;
+  color: var(--primary);
+}
+
+/* ============================================================
+   5. KHU VỰC NHẬP LIỆU (BOTTOM INPUT)
+   ============================================================ */
+.game-input-container {
+  flex-shrink: 0;
+  background-color: #ffffff;
+  border-top: 1px solid var(--border-c);
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 20;
+}
+
+.target-hint-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-height: 20px;
+}
+
+.highlight-syllable {
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.btn-giveup-neu {
+  background-color: var(--danger-light);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-giveup-neu:hover {
+  background-color: #fee2e2;
+}
+
+.input-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.word-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid var(--border-c);
+  border-radius: 10px;
+  background-color: var(--bg-game);
+  color: var(--text-dark);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.word-input:focus {
+  background-color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.word-input:disabled {
+  opacity: 0.65;
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.btn-send-word {
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  background-color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-send-word:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-send-word:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #94a3b8;
+  border-color: #94a3b8;
+}
+
+/* ============================================================
+   6. MODALS (ENTRY, LOBBY, GAME OVER)
+   ============================================================ */
+.game-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.game-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mp-modal-card,
+.game-modal-card {
+  width: 100%;
+  max-width: 380px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-c);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mp-entry-tabs {
+  display: flex;
+  gap: 8px;
+  background-color: var(--bg-game);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid var(--border-c);
+}
+
+.mp-entry-tab {
+  flex: 1;
+  padding: 7px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mp-entry-tab.active {
+  background-color: #ffffff;
+  color: var(--primary-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+.mp-card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mp-pin-input {
+  text-align: center;
+  letter-spacing: 12px;
+  font-size: 1.8rem;
+  font-weight: 800;
+  padding: 10px;
+  border: 1px solid var(--border-c);
+  border-radius: 10px;
+  outline: none;
+  color: var(--primary-dark);
+}
+
+.mp-pin-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+/* Lobby Styling */
+.mp-lobby-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.mp-pin-display-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.mp-pin-big {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  letter-spacing: 6px;
+}
+
+.mp-player-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mp-player-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background-color: var(--bg-game);
+  border: 1px solid var(--border-c);
+  border-radius: 8px;
+}
+
+.mp-player-item.is-me {
+  border-color: var(--primary-border);
+  background-color: var(--primary-light);
+}
+
+/* Modal Game Over */
+.modal-score-box {
+  display: flex;
+  justify-content: space-around;
+  background-color: var(--bg-game);
+  border: 1px solid var(--border-c);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.score-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.score-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.score-stat-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.modal-actions-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Toast Message */
+.arcade-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--text-dark);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+  animation: fadeIn 0.15s ease-out;
+}

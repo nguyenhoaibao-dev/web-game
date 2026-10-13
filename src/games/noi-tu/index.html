@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Trò chơi Nối Từ Tiếng Việt - Bàn đấu trí ngôn ngữ 2 tiếng thanh lịch, tối giản">
+  <title>Bàn Đấu Nối Từ - Arcade Vui</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/global.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 1. Header (Top) -->
+  <header class="game-header">
+    <div class="header-bar">
+      <!-- Nút Quay lại thoát iframe về Portal -->
+      <button class="btn-icon-neu" id="btn-back-portal" title="Quay lại trang chủ">
+        ⬅️
+      </button>
+
+      <!-- Profile & Điểm hiện tại -->
+      <div class="user-score-box">
+        <span class="player-avatar-small" id="player-avatar-small">🐱</span>
+        <span class="player-name-label" id="player-name-label">Người Chơi</span>
+        <span class="current-score-badge" id="current-score">0đ</span>
+      </div>
+
+      <!-- Action buttons (Turn time setting + Sound) -->
+      <div class="header-actions">
+        <button class="btn-time-neu" id="btn-solo-time" title="Cài đặt thời gian lượt">
+          ⏱️ <span id="solo-time-label">12s</span>
+        </button>
+        <button class="btn-icon-neu" id="btn-sound-toggle" title="Bật/Tắt âm thanh">
+          🔊
+        </button>
+      </div>
+    </div>
+
+    <!-- Mode Switcher Tabs -->
+    <div class="mode-switcher-bar">
+      <button class="mode-tab-btn active" id="tab-solo-mode">🤖 Luyện Với Bot</button>
+      <button class="mode-tab-btn" id="tab-multi-mode">👥 Bàn Đấu Nhóm (PIN)</button>
+    </div>
+
+    <!-- Thanh đếm ngược thời gian chạy dọc viền dưới header -->
+    <div class="timer-container" aria-label="Thanh đếm ngược thời gian">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+  </header>
+
+  <!-- 2. BÀN THI ĐẤU CHÍNH (TABLE ARENA) -->
+  <main class="table-arena-container" id="table-arena">
+    <!-- Thanh thông tin bàn đấu (Số lượng thành viên & vòng đấu) -->
+    <div class="table-meta-bar" id="table-meta-bar">
+      <div class="meta-item meta-players" id="meta-players-count">
+        <span>👥</span>
+        <span id="meta-players-text">Bàn đấu: 2 người</span>
+      </div>
+      <div class="meta-item meta-status" id="meta-game-status">
+        <span class="status-indicator-dot"></span>
+        <span id="meta-status-text">Đang thi đấu</span>
+      </div>
+      <div class="meta-item meta-round" id="meta-chain-count">
+        <span>🔗</span>
+        <span id="meta-chain-text">0 từ đã nối</span>
+      </div>
+    </div>
+
+    <!-- Khung Bàn Thi Đấu (Game Table) -->
+    <div class="poker-table-wrapper">
+      <div class="game-table" id="game-table">
+        
+        <!-- Hướng 11h - 12h - 1h (Phía trên bàn) -->
+        <div class="table-seats-row top-seats" id="table-top-seats">
+          <!-- Rendered dynamically via logic.js / multiplayer.js -->
+        </div>
+
+        <!-- Hàng giữa: Hướng 9h (Trái) - Tâm bàn - Hướng 3h (Phải) -->
+        <div class="table-mid-row">
+          <!-- Hướng 9h (Cánh trái) -->
+          <div class="table-side-seat left-seat" id="table-left-seats"></div>
+
+          <!-- Tâm bàn thi đấu (Table Center Felt) -->
+          <div class="table-center-felt" id="table-center">
+            
+            <!-- Đồng hồ số tròn ở tâm bàn -->
+            <div class="center-timer-wrap">
+              <div class="center-timer-circle" id="center-timer-circle">
+                <span class="center-timer-val" id="center-timer-val">12</span>
+                <span class="center-timer-unit">s</span>
+              </div>
+            </div>
+
+            <!-- Từ hiện tại trên mặt bàn -->
+            <div class="center-word-spotlight">
+              <span class="word-spotlight-label" id="spotlight-speaker-label">Từ hiện tại trên bàn</span>
+              <div class="center-word-card" id="center-word-card">
+                Đang tải...
+              </div>
+            </div>
+
+            <!-- Yêu cầu tiếng cần nối tiếp -->
+            <div class="center-target-box" id="center-target-box">
+              <span class="target-label">Nối tiếp tiếng:</span>
+              <span class="target-syllable-badge" id="target-syllable-badge">---</span>
+            </div>
+
+            <!-- Mạch nối các từ gần nhất -->
+            <div class="recent-chain-flow" id="recent-chain-flow">
+              <!-- Breadcrumbs of last 3-4 connected words -->
+            </div>
+
+          </div>
+
+          <!-- Hướng 3h (Cánh phải) -->
+          <div class="table-side-seat right-seat" id="table-right-seats"></div>
+        </div>
+
+        <!-- Hướng 6h (Phía dưới bàn - VỊ TRÍ MẶC ĐỊNH CỦA BẠN!) -->
+        <div class="table-seats-row bottom-seats" id="table-bottom-seats">
+          <!-- Luôn luôn là Người Chơi Hiện Tại (Bạn) ở hướng 6h! -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Hidden compatibility chat element for background logs -->
+    <div id="chat-list" style="display: none;" aria-hidden="true"></div>
+  </main>
+
+  <!-- 3. Khu vực Nhập liệu (Bottom Bar) -->
+  <footer class="game-input-container">
+    <div class="target-hint-box">
+      <span id="hint-text">Đang tải lượt chơi...</span>
+      <button class="btn-giveup-neu" id="btn-giveup" style="display: none;" title="Bỏ cuộc vì bí từ">🏳️ Bí từ</button>
+    </div>
+
+    <div class="input-form">
+      <input 
+        type="text" 
+        class="word-input" 
+        id="word-input" 
+        placeholder="Nhập từ 2 tiếng..." 
+        autocomplete="off" 
+        autocorrect="off" 
+        autocapitalize="off" 
+        spellcheck="false"
+      />
+      <button class="btn-send-word" id="btn-send" title="Gửi từ">
+        GỬI 🚀
+      </button>
+    </div>
+  </footer>
+
+  <!-- 4. Modal Tạo / Tham Gia Phòng Online (Mã PIN) -->
+  <div class="game-modal-overlay" id="mp-entry-modal" aria-modal="true" role="dialog">
+    <div class="mp-modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-c); padding-bottom: 10px;">
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark);">👥 BÀN ĐẤU NHÓM ONLINE</h3>
+        <button class="btn-icon-neu" id="btn-close-entry-modal" style="width: 28px; height: 28px; font-size: 0.8rem;">✕</button>
+      </div>
+
+      <div class="mp-entry-tabs">
+        <button class="mp-entry-tab active" id="tab-sub-join">🚪 VÀO BÀN</button>
+        <button class="mp-entry-tab" id="tab-sub-create">➕ TẠO BÀN MỚI</button>
+      </div>
+
+      <!-- Tab 1: Vào bằng PIN -->
+      <div class="mp-card-section" id="section-join-room">
+        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">NHẬP MÃ PIN 4 CHỮ SỐ:</label>
+        <input 
+          type="text" 
+          class="mp-pin-input" 
+          id="input-pin-code" 
+          placeholder="____" 
+          maxlength="4" 
+          pattern="[0-9]*" 
+          inputmode="numeric"
+          autocomplete="off"
+        />
+        <button class="btn-neu btn-primary" id="btn-join-pin" style="width: 100%; padding: 10px; font-size: 0.95rem;">
+          🚪 Vào Bàn Ngay
+        </button>
+      </div>
+
+      <!-- Tab 2: Tạo phòng mới -->
+      <div class="mp-card-section" id="section-create-room" style="display: none;">
+        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">THỜI GIAN LƯỢT ĐẤU:</label>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="btn-neu btn-sm mp-time-opt" data-time="8" style="flex: 1; min-width: 50px;">8s</button>
+          <button type="button" class="btn-neu btn-sm mp-time-opt" data-time="10" style="flex: 1; min-width: 50px;">10s</button>
+          <button type="button" class="btn-neu btn-sm mp-time-opt btn-accent" data-time="12" style="flex: 1; min-width: 50px;">12s</button>
+          <button type="button" class="btn-neu btn-sm mp-time-opt" data-time="15" style="flex: 1; min-width: 50px;">15s</button>
+          <button type="button" class="btn-neu btn-sm mp-time-opt" data-time="20" style="flex: 1; min-width: 50px;">20s</button>
+        </div>
+
+        <div style="background: var(--bg-game); border: 1px solid var(--border-c); border-radius: 10px; padding: 10px 12px; margin-top: 4px;">
+          <label style="font-size: 0.78rem; font-weight: 600; color: var(--text-dark); display: block; margin-bottom: 6px;">⏱️ TỰ ĐẶT SỐ GIÂY (5 - 60S):</label>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <button type="button" class="btn-neu btn-sm" id="btn-dec-custom-time" style="width: 34px; height: 34px; padding: 0;">−</button>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <input 
+                type="number" 
+                class="input-neu" 
+                id="input-custom-turn-time" 
+                min="5" 
+                max="60" 
+                value="12" 
+                style="width: 65px; text-align: center; padding: 6px; font-weight: 700;"
+              />
+              <span style="font-size: 0.88rem; font-weight: 600;">Giây</span>
+            </div>
+            <button type="button" class="btn-neu btn-sm" id="btn-inc-custom-time" style="width: 34px; height: 34px; padding: 0;">+</button>
+          </div>
+        </div>
+
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+          * Thể thức: <strong>Bàn Đấu Sinh Tồn Loại Trực Tiếp</strong>. Mỗi người chơi lần lượt nối từ quanh bàn.
+        </p>
+        <button class="btn-neu btn-primary" id="btn-create-now" style="width: 100%; padding: 10px; font-size: 0.95rem;">
+          🚀 Tạo Bàn Đấu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Modal Phòng Chờ (Lobby) -->
+  <div class="game-modal-overlay" id="mp-room-modal" aria-modal="true" role="dialog"></div>
+
+  <!-- 6. Modal Kết Thúc Ván Đấu Đấu Nhóm -->
+  <div class="game-modal-overlay" id="mp-game-over-modal" aria-modal="true" role="dialog"></div>
+
+  <!-- 7. Game Over / Victory Modal (Solo) -->
+  <div class="game-modal-overlay" id="game-over-modal" aria-modal="true" role="dialog">
+    <div class="game-modal-card">
+      <div style="text-align: center; font-size: 2rem;">🏆</div>
+      <h2 style="font-size: 1.25rem; font-weight: 800; text-align: center;" id="modal-title">KẾT THÚC VÁN ĐẤU</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center;" id="modal-reason">Hết thời gian suy nghĩ!</p>
+
+      <div class="modal-score-box">
+        <div class="score-stat-item">
+          <span class="score-stat-label">Điểm ván</span>
+          <span class="score-stat-value" id="final-score">0</span>
+        </div>
+        <div class="score-stat-item">
+          <span class="score-stat-label">Số từ nối</span>
+          <span class="score-stat-value" id="final-words">0</span>
+        </div>
+        <div class="score-stat-item">
+          <span class="score-stat-label">Kỷ lục</span>
+          <span class="score-stat-value" id="final-record" style="color: var(--primary);">0</span>
+        </div>
+      </div>
+
+      <div class="modal-actions-col">
+        <button class="btn-neu btn-primary" id="btn-restart" style="width: 100%; padding: 10px;">
+          🔄 Chơi Lại Ván Mới
+        </button>
+        <button class="btn-neu" id="btn-exit" style="width: 100%; padding: 10px;">
+          🏠 Về Trang Chủ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Scripts -->
+  <script type="module" src="logic.js"></script>
+</body>
+</html>

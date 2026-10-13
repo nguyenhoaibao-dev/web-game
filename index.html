@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Arcade Vui - Nền tảng mini-game giải trí nhanh, giao diện tối giản hiện đại với tông màu xanh lá mát mẻ.">
+  <title>Arcade Vui - Nền Tảng Mini Game Giải Trí</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core Styles -->
+  <link rel="stylesheet" href="src/assets/css/global.css">
+  <link rel="stylesheet" href="src/assets/css/layout.css">
+</head>
+<body>
+
+  <!-- Outer 3-column Layout for Desktop / Mobile-First Phone Container -->
+  <div class="arcade-viewport">
+    
+    <!-- Left Ad Banner (Desktop Adsense Mockup) -->
+    <aside class="side-ad-banner" id="ad-banner-left" aria-label="Quảng cáo tài trợ bên trái">
+      <!-- Injected via adManager.js -->
+    </aside>
+
+    <!-- Main Phone Canvas Container (Portal) -->
+    <main class="phone-container" id="phone-container">
+      
+      <!-- Top Header Mount -->
+      <div id="header-mount"></div>
+
+      <!-- Scrollable Portal Content -->
+      <div class="portal-content" id="portal-content">
+        
+        <!-- Welcome / Daily Greeting Card -->
+        <section class="welcome-card" aria-label="Chào mừng người chơi">
+          <div class="welcome-info">
+            <h2 class="welcome-title" id="welcome-player-text">Chào bạn nhỏ! 👋</h2>
+            <p class="welcome-desc">Khám phá các bàn đấu trí và mini-game giải trí thú vị ngay hôm nay!</p>
+            <div class="welcome-badge">
+              <span>🎁 Điểm danh:</span>
+              <span>+20 Xu miễn phí hôm nay!</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- In-feed Ad Banner -->
+        <div id="infeed-ad-slot" aria-label="Quảng cáo nổi bật"></div>
+
+        <!-- Game Selection Section -->
+        <section aria-label="Danh sách trò chơi">
+          <div class="section-header">
+            <h3 class="section-title">
+              <span>🎯</span>
+              <span>DANH SÁCH TRÒ CHƠI</span>
+            </h3>
+            <span class="badge-neu badge-green">MIỄN PHÍ</span>
+          </div>
+
+          <div class="game-grid" id="game-list-mount">
+            <!-- Injected via gameCard.js -->
+          </div>
+        </section>
+
+        <!-- Portal Bottom Info -->
+        <footer class="portal-footer">
+          <p>✨ <strong>Arcade Vui</strong> • Mini-game HTML5 giải trí thế hệ mới</p>
+          <p>© 2026 Arcade Web Platform. Chơi mượt mà trên mọi thiết bị.</p>
+        </footer>
+
+      </div>
+
+      <!-- Fullscreen Game Player (Iframe Container) -->
+      <div class="game-player-screen" id="game-player-screen" aria-label="Khung chơi game">
+        <button class="portal-close-game-btn" id="portal-close-game-btn" title="Đóng game về trang chủ" aria-label="Đóng game">✕</button>
+        <iframe class="game-iframe" id="active-game-frame" src="about:blank" title="Cửa sổ Mini-game" allow="autoplay"></iframe>
+      </div>
+
+    </main>
+
+    <!-- Right Ad Banner (Desktop Adsense Mockup) -->
+    <aside class="side-ad-banner" id="ad-banner-right" aria-label="Quảng cáo tài trợ bên phải">
+      <!-- Injected via adManager.js -->
+    </aside>
+
+  </div>
+
+  <!-- Main Portal Orchestrator Script -->
+  <script type="module">
+    import { playerManager } from './src/core/playerManager.js';
+    import { adManager } from './src/core/adManager.js';
+    import { renderHeader } from './src/components/header.js';
+    import { renderGameList } from './src/components/gameCard.js';
+
+    function initPortal() {
+      // 1. Render Header
+      const headerMount = document.getElementById('header-mount');
+      renderHeader(headerMount);
+
+      // 2. Cập nhật lời chào tên người chơi
+      const welcomeText = document.getElementById('welcome-player-text');
+      const updateWelcome = () => {
+        const prof = playerManager.getProfile();
+        if (welcomeText) {
+          welcomeText.textContent = `Chào ${prof.name}! ${prof.avatar}`;
+        }
+      };
+      updateWelcome();
+      window.addEventListener('arcade_player_updated', updateWelcome);
+
+      // 3. Khởi tạo và render Quảng cáo
+      adManager.init();
+
+      // 4. Quản lý Màn hình Iframe Game
+      const playerScreen = document.getElementById('game-player-screen');
+      const gameIframe = document.getElementById('active-game-frame');
+
+      const launchGame = (game) => {
+        gameIframe.src = game.path;
+        playerScreen.classList.add('active');
+        adManager.refreshAds();
+      };
+
+      const closeGame = () => {
+        playerScreen.classList.remove('active');
+        gameIframe.src = 'about:blank';
+        adManager.refreshAds();
+      };
+
+      document.getElementById('portal-close-game-btn')?.addEventListener('click', closeGame);
+
+      // 5. Render danh sách Game
+      const gameListMount = document.getElementById('game-list-mount');
+      renderGameList(gameListMount, (game) => {
+        launchGame(game);
+      });
+
+      // 6. Lắng nghe PostMessage từ Iframe Game con
+      window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || typeof data !== 'object') return;
+
+        switch (data.type) {
+          case 'ARCADE_EXIT_GAME':
+            closeGame();
+            break;
+
+          case 'ARCADE_RECORD_SCORE':
+            if (data.gameId && typeof data.score === 'number') {
+              const res = playerManager.recordGameScore(data.gameId, data.score);
+              if (gameIframe.contentWindow) {
+                gameIframe.contentWindow.postMessage({
+                  type: 'ARCADE_SCORE_RECORDED',
+                  result: res
+                }, '*');
+              }
+            }
+            break;
+
+          case 'ARCADE_REQUEST_PLAYER':
+            if (gameIframe.contentWindow) {
+              gameIframe.contentWindow.postMessage({
+                type: 'ARCADE_PLAYER_INFO',
+                profile: playerManager.getProfile()
+              }, '*');
+            }
+            break;
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPortal);
+    } else {
+      initPortal();
+    }
+  </script>
+</body>
+</html>
