@@ -8,6 +8,7 @@ export class MultiplayerManager {
   constructor(gameInstance) {
     this.game = gameInstance;
     this.ws = null;
+    this.connectCallbacks = [];
     this.myPlayerId = null;
     this.currentRoom = null;
     this.isMyTurn = false;
@@ -42,11 +43,18 @@ export class MultiplayerManager {
   }
 
   /**
-   * Kết nối WebSocket tới server
+   * Kết nối WebSocket tới server với hàng đợi callback
    */
   connect(onOpenCallback) {
+    if (typeof onOpenCallback === 'function') {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        onOpenCallback();
+      } else {
+        this.connectCallbacks.push(onOpenCallback);
+      }
+    }
+
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
-      if (onOpenCallback && this.ws.readyState === WebSocket.OPEN) onOpenCallback();
       return;
     }
 
@@ -59,7 +67,15 @@ export class MultiplayerManager {
 
       this.ws.onopen = () => {
         console.log('✅ Đã kết nối WebSocket thành công:', wsUrl);
-        if (onOpenCallback) onOpenCallback();
+        // Chạy tất cả các callback đang chờ trong hàng đợi
+        while (this.connectCallbacks.length > 0) {
+          const cb = this.connectCallbacks.shift();
+          try {
+            cb();
+          } catch (err) {
+            console.error('Lỗi khi thực thi connect callback:', err);
+          }
+        }
         if (this.pendingRoomCode) {
           this.joinRoom(this.pendingRoomCode);
           this.pendingRoomCode = null;
@@ -77,15 +93,20 @@ export class MultiplayerManager {
 
       this.ws.onclose = () => {
         console.warn('⚠️ Mất kết nối WebSocket tới server!');
-        this.showToast('Mất kết nối tới máy chủ phòng!');
+        this.connectCallbacks = [];
+        this.resetEntryButtons();
       };
 
       this.ws.onerror = (err) => {
         console.error('WS Error:', err);
+        this.connectCallbacks = [];
+        this.resetEntryButtons();
         this.showToast('Lỗi kết nối máy chủ!');
       };
     } catch (err) {
       console.error('Không thể tạo kết nối WebSocket:', err);
+      this.connectCallbacks = [];
+      this.resetEntryButtons();
       this.showToast('Không thể kết nối WebSocket!');
     }
   }
@@ -94,11 +115,30 @@ export class MultiplayerManager {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
     } else {
-      this.showToast('Đang kết nối lại máy chủ...');
       this.connect(() => {
-        this.ws.send(JSON.stringify(data));
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify(data));
+        }
       });
     }
+  }
+
+  resetEntryButtons() {
+    const btnCreate = document.getElementById('btn-create-now');
+    if (btnCreate) {
+      btnCreate.disabled = false;
+      btnCreate.innerHTML = '🚀 Tạo Bàn Đấu';
+    }
+    const btnJoin = document.getElementById('btn-join-pin');
+    if (btnJoin) {
+      btnJoin.disabled = false;
+      btnJoin.innerHTML = '🚪 Vào Bàn Ngay';
+    }
+  }
+
+  closeEntryModalAndResetButtons() {
+    this.resetEntryButtons();
+    document.getElementById('mp-entry-modal')?.classList.remove('active');
   }
 
   createRoom(turnTimeLimit = 12) {
@@ -179,6 +219,7 @@ export class MultiplayerManager {
         this.isEliminated = false;
         sounds.playPop();
         this.closeMatchOverModal();
+        this.closeEntryModalAndResetButtons();
         this.renderLobby();
         break;
 
@@ -249,6 +290,7 @@ export class MultiplayerManager {
       case 'ERROR':
         sounds.playError();
         this.showToast(`⚠️ ${msg.message}`);
+        this.resetEntryButtons();
         break;
     }
   }
@@ -281,6 +323,13 @@ export class MultiplayerManager {
     const room = this.currentRoom;
     if (!room) return;
 
+    // Đảm bảo đóng modal entry (nếu có)
+    this.closeEntryModalAndResetButtons();
+
+    // 1. Cập nhật giao diện bàn thi đấu (Table Arena) ở trạng thái phòng chờ
+    this.renderLobbyTable();
+
+    // 2. Mở Modal Phòng Chờ hiển thị to rõ Mã PIN
     const overlay = document.getElementById('mp-room-modal');
     if (!overlay) return;
 
@@ -291,23 +340,26 @@ export class MultiplayerManager {
         <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-c); padding-bottom: 10px;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">MÃ BÀN (PIN):</span>
-            <div id="btn-copy-pin" style="display: flex; align-items: center; gap: 6px; background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: 8px; padding: 4px 10px; cursor: pointer;" title="Bấm để sao chép mã">
-              <span style="font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); letter-spacing: 3px;">${room.code}</span>
+            <div id="btn-copy-pin" style="display: flex; align-items: center; gap: 6px; background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: 8px; padding: 4px 12px; cursor: pointer;" title="Bấm để sao chép mã">
+              <span style="font-size: 1.35rem; font-weight: 800; color: var(--primary-dark); letter-spacing: 3px;">${room.code}</span>
               <span style="font-size: 0.85rem;">📋</span>
             </div>
           </div>
-          ${this.myPlayerId === room.hostId ? `
-            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-              <span style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted);">Thời gian lượt:</span>
-              <div style="display: flex; align-items: center; gap: 4px; background: #ffffff; border: 1px solid var(--border-c); border-radius: 8px; padding: 2px 6px;">
-                <button type="button" class="btn-neu btn-sm" id="btn-lobby-dec-time" style="width: 24px; height: 24px; padding: 0;" title="Giảm 1 giây">−</button>
-                <span id="lobby-time-display" style="font-weight: 700; font-size: 0.85rem; min-width: 28px; text-align: center; cursor: pointer;" title="Bấm để nhập số giây">${room.turnTimeLimit}s</span>
-                <button type="button" class="btn-neu btn-sm" id="btn-lobby-inc-time" style="width: 24px; height: 24px; padding: 0;" title="Tăng 1 giây">+</button>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            ${this.myPlayerId === room.hostId ? `
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                <span style="font-size: 0.68rem; font-weight: 600; color: var(--text-muted);">Thời gian:</span>
+                <div style="display: flex; align-items: center; gap: 3px; background: #ffffff; border: 1px solid var(--border-c); border-radius: 6px; padding: 2px 4px;">
+                  <button type="button" class="btn-neu btn-sm" id="btn-lobby-dec-time" style="width: 22px; height: 22px; padding: 0;" title="Giảm 1 giây">−</button>
+                  <span id="lobby-time-display" style="font-weight: 700; font-size: 0.82rem; min-width: 26px; text-align: center; cursor: pointer;" title="Bấm để đổi số giây">${room.turnTimeLimit}s</span>
+                  <button type="button" class="btn-neu btn-sm" id="btn-lobby-inc-time" style="width: 22px; height: 22px; padding: 0;" title="Tăng 1 giây">+</button>
+                </div>
               </div>
-            </div>
-          ` : `
-            <span class="badge-neu badge-green">⏱️ ${room.turnTimeLimit}s/lượt</span>
-          `}
+            ` : `
+              <span class="badge-neu badge-green">⏱️ ${room.turnTimeLimit}s/lượt</span>
+            `}
+            <button class="btn-icon-neu" id="btn-minimize-lobby" style="width: 28px; height: 28px; font-size: 0.8rem;" title="Thu nhỏ để xem bàn">✕</button>
+          </div>
         </div>
 
         <p style="font-size: 0.78rem; color: var(--text-muted);">Chia sẻ mã PIN <strong>${room.code}</strong> cho bạn bè để cùng vào bàn đấu!</p>
@@ -362,6 +414,12 @@ export class MultiplayerManager {
       this.showToast(`Đã sao chép mã PIN: ${room.code}!`);
     });
 
+    // Thu nhỏ modal để xem bàn
+    document.getElementById('btn-minimize-lobby')?.addEventListener('click', () => {
+      overlay.classList.remove('active');
+      this.showToast('Bấm vào ô Mã PIN ở tâm bàn để mở lại phòng chờ!');
+    });
+
     // Sự kiện Ready / Start
     document.getElementById('btn-mp-ready')?.addEventListener('click', () => {
       this.toggleReady();
@@ -403,6 +461,74 @@ export class MultiplayerManager {
     }
   }
 
+  /**
+   * Cập nhật Bàn Đấu (Table Arena) khi ở chế độ Phòng Chờ (Lobby)
+   */
+  renderLobbyTable() {
+    const room = this.currentRoom;
+    if (!room) return;
+
+    // Cập nhật Meta Bar
+    const metaPlayers = document.getElementById('meta-players-text');
+    const metaStatus = document.getElementById('meta-status-text');
+    const metaChain = document.getElementById('meta-chain-text');
+    if (metaPlayers) metaPlayers.textContent = `Bàn đấu: ${room.players.length}/8 người`;
+    if (metaStatus) {
+      metaStatus.textContent = `Mã PIN: ${room.code}`;
+      metaStatus.style.cursor = 'pointer';
+      metaStatus.title = 'Bấm để mở bảng phòng chờ';
+      metaStatus.onclick = () => {
+        document.getElementById('mp-room-modal')?.classList.add('active');
+      };
+    }
+    if (metaChain) metaChain.textContent = `Chờ bắt đầu`;
+
+    // Cập nhật Tâm bàn: hiển thị to rõ Mã PIN và thông báo chờ
+    const centerCard = document.getElementById('center-word-card');
+    const speakerLabel = document.getElementById('spotlight-speaker-label');
+    const targetBadge = document.getElementById('target-syllable-badge');
+    const centerTimerVal = document.getElementById('center-timer-val');
+    const recentChain = document.getElementById('recent-chain-flow');
+
+    if (centerCard) {
+      centerCard.style.cursor = 'pointer';
+      centerCard.title = 'Bấm để mở bảng phòng chờ';
+      centerCard.innerHTML = `
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;">MÃ BÀN ĐẤU (PIN)</div>
+        <div style="font-size: 1.85rem; font-weight: 800; color: var(--primary-dark); letter-spacing: 4px;">${room.code}</div>
+      `;
+      centerCard.onclick = () => {
+        if (this.currentRoom && this.currentRoom.state === 'LOBBY') {
+          document.getElementById('mp-room-modal')?.classList.add('active');
+        }
+      };
+    }
+    if (speakerLabel) speakerLabel.textContent = `Phòng Chờ Đấu Nhóm (${room.players.length}/8 người)`;
+    if (targetBadge) {
+      const isHost = this.myPlayerId === room.hostId;
+      targetBadge.textContent = isHost 
+        ? (room.players.length >= 2 ? 'Sẵn sàng bắt đầu! 🚀' : 'Đang đợi thêm người... ⏳')
+        : 'Chờ chủ bàn bắt đầu... ⏳';
+    }
+    if (centerTimerVal) centerTimerVal.textContent = room.turnTimeLimit;
+    if (recentChain) recentChain.innerHTML = `<span class="chain-chip active" style="font-size: 0.75rem;">Mã PIN: ${room.code} • ${room.turnTimeLimit}s/lượt</span>`;
+
+    // Khóa input nhập từ
+    if (this.game) {
+      if (this.game.elInput) {
+        this.game.elInput.disabled = true;
+        this.game.elInput.value = '';
+        this.game.elInput.placeholder = 'Chờ bắt đầu ván đấu để nối từ...';
+      }
+      if (this.game.elHintText) {
+        this.game.elHintText.innerHTML = `Mã bàn: <strong class="highlight-syllable">${room.code}</strong> • Chia sẻ mã cho bạn bè để cùng vào bàn!`;
+      }
+    }
+
+    // Render các ghế người chơi quanh bàn theo nguyên tắc đồng hồ (6h = Bạn)
+    this.renderTableSeats();
+  }
+
   updateRoomTime(newLimit) {
     const clean = Math.max(5, Math.min(60, Number(newLimit) || 12));
     this.send({
@@ -411,12 +537,6 @@ export class MultiplayerManager {
     });
   }
 
-  /**
-   * Bắt đầu giao diện Ván Đấu Sinh Tồn
-   */
-  /**
-   * Bàn thi đấu: Render rõ ràng số lượng & vị trí các thành viên quanh bàn
-   */
   /**
    * Bàn thi đấu: Render các thành viên quanh bàn theo nguyên tắc đồng hồ:
    * VỊ TRÍ MẶC ĐỊNH CỦA MỖI NGƯỜI CHƠI (TRÊN MÀN HÌNH CỦA HỌ) LUÔN LUÔN LÀ HƯỚNG 6H!
@@ -434,9 +554,12 @@ export class MultiplayerManager {
 
     const players = this.currentRoom.players || [];
     const alivePlayers = players.filter(p => p.isAlive);
+    const isLobby = this.currentRoom.state === 'LOBBY';
 
     if (metaPlayers) {
-      metaPlayers.textContent = `Bàn đấu: ${alivePlayers.length}/${players.length} người sống sót`;
+      metaPlayers.textContent = isLobby 
+        ? `Bàn đấu: ${players.length}/8 người`
+        : `Bàn đấu: ${alivePlayers.length}/${players.length} người sống sót`;
     }
     if (metaStatus) {
       metaStatus.textContent = `Mã PIN: ${this.currentRoom.code}`;
@@ -460,11 +583,30 @@ export class MultiplayerManager {
       const isMe = p.id === this.myPlayerId;
       const isHost = p.id === this.currentRoom.hostId;
 
+      let statusBadge = '';
+      if (isLobby) {
+        if (isHost) {
+          statusBadge = '<span class="seat-status-badge seat-status-turn">👑 Chủ bàn</span>';
+        } else if (p.isReady) {
+          statusBadge = '<span class="seat-status-badge seat-status-turn">✅ Sẵn sàng</span>';
+        } else {
+          statusBadge = '<span class="seat-status-badge">⏳ Chờ...</span>';
+        }
+      } else {
+        if (isDead) {
+          statusBadge = '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>';
+        } else if (isTurn) {
+          statusBadge = '<span class="seat-status-badge seat-status-turn">👉 Đến lượt</span>';
+        } else {
+          statusBadge = '<span class="seat-status-badge">⏳ Chờ</span>';
+        }
+      }
+
       return `
-        <div class="player-seat ${isSide ? 'side-seat' : ''} ${isMe ? 'is-me' : ''} ${isTurn ? 'is-turn' : ''} ${isDead ? 'is-dead' : ''}" title="Hướng ${clockLabel}: ${p.name}">
+        <div class="player-seat ${isSide ? 'side-seat' : ''} ${isMe ? 'is-me' : ''} ${isTurn && !isLobby ? 'is-turn' : ''} ${isDead && !isLobby ? 'is-dead' : ''}" title="Hướng ${clockLabel}: ${p.name}">
           <div class="seat-avatar-wrap">
             <div class="seat-avatar">${p.avatar || '🐱'}</div>
-            ${isTurn && !isDead ? '<div class="seat-turn-dot"></div>' : ''}
+            ${isTurn && !isDead && !isLobby ? '<div class="seat-turn-dot"></div>' : ''}
           </div>
           <div class="seat-meta">
             <div class="seat-name-row">
@@ -473,9 +615,7 @@ export class MultiplayerManager {
               <span class="seat-clock-tag">${clockLabel}</span>
             </div>
             <span class="seat-stat">${p.score || 0}đ • ${p.wordsCount || 0} từ</span>
-            <span class="seat-status-badge ${isDead ? 'seat-status-dead' : (isTurn ? 'seat-status-turn' : '')}">
-              ${isDead ? '❌ Đã loại' : (isTurn ? '👉 Đến lượt' : '⏳ Chờ')}
-            </span>
+            ${statusBadge}
           </div>
         </div>
       `;
@@ -516,7 +656,7 @@ export class MultiplayerManager {
       topList.push({ player: opponents[2], label: '12h' });
       topList.push({ player: opponents[3], label: '1h' });
       rightList.push({ player: opponents[4], label: '3h' });
-    } else {
+    } else if (opponents.length >= 6) {
       // 7-8 người: 8h, 10h, 11h, 12h, 1h, 2h, 4h
       leftList.push({ player: opponents[0], label: '8h' });
       if (opponents[1]) leftList.push({ player: opponents[1], label: '10h' });
@@ -528,7 +668,25 @@ export class MultiplayerManager {
     }
 
     if (topSeats) {
-      topSeats.innerHTML = topList.map(item => renderSeatHtml(item.player, item.label, false)).join('');
+      if (topList.length === 0 && isLobby) {
+        topSeats.innerHTML = `
+          <div class="player-seat empty-seat" style="opacity: 0.65; border-style: dashed;" title="Đang chờ bạn bè vào bàn">
+            <div class="seat-avatar-wrap">
+              <div class="seat-avatar" style="background: var(--bg-game); font-size: 0.95rem;">➕</div>
+            </div>
+            <div class="seat-meta">
+              <div class="seat-name-row">
+                <span class="seat-name" style="color: var(--text-muted);">Chờ đối thủ...</span>
+                <span class="seat-clock-tag">12h</span>
+              </div>
+              <span class="seat-stat">Mã PIN: ${this.currentRoom.code}</span>
+              <span class="seat-status-badge">Đang đợi</span>
+            </div>
+          </div>
+        `;
+      } else {
+        topSeats.innerHTML = topList.map(item => renderSeatHtml(item.player, item.label, false)).join('');
+      }
     }
     if (leftSeats) {
       leftSeats.innerHTML = leftList.map(item => renderSeatHtml(item.player, item.label, true)).join('');

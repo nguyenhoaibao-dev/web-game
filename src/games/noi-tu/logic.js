@@ -258,10 +258,9 @@ export class WordChainGame {
         this.mpManager.showToast('Vui lòng nhập đủ 4 chữ số PIN!');
         return;
       }
-      this.mpEntryModal?.classList.remove('active');
-      this.mpManager.connect(() => {
-        this.mpManager.joinRoom(pin);
-      });
+      btnJoinPin.disabled = true;
+      btnJoinPin.innerHTML = '⏳ Đang vào bàn...';
+      this.mpManager.joinRoom(pin);
     });
 
     // Nút Tạo phòng mới
@@ -269,15 +268,15 @@ export class WordChainGame {
     btnCreateNow?.addEventListener('click', () => {
       const customVal = Number(inputCustomTime?.value) || selectedTurnTime;
       const finalTurnTime = Math.max(5, Math.min(60, customVal));
-      this.mpEntryModal?.classList.remove('active');
-      this.mpManager.connect(() => {
-        this.mpManager.createRoom(finalTurnTime);
-      });
+      btnCreateNow.disabled = true;
+      btnCreateNow.innerHTML = '⏳ Đang tạo bàn...';
+      this.mpManager.createRoom(finalTurnTime);
     });
 
     // Nút Đóng Modal Entry
     document.getElementById('btn-close-entry-modal')?.addEventListener('click', () => {
       this.mpEntryModal?.classList.remove('active');
+      this.mpManager.resetEntryButtons();
       if (!this.mpManager.currentRoom) {
         this.switchMode('solo');
       }
@@ -289,6 +288,65 @@ export class WordChainGame {
       setTimeout(() => {
         this.switchMode('multi');
       }, 300);
+    }
+  }
+
+  /**
+   * Đặt lại giao diện Bàn Đấu sang chế độ Đấu Nhóm (chờ vào bàn)
+   */
+  resetTableForMultiplayer() {
+    clearInterval(this.timerInterval);
+    this.isPlayerTurn = false;
+    this.recentChain = [];
+
+    if (this.elCenterWordCard) {
+      this.elCenterWordCard.style.cursor = 'default';
+      this.elCenterWordCard.innerHTML = 'Phòng Chờ';
+    }
+    if (this.elTargetSyllableBadge) this.elTargetSyllableBadge.textContent = '---';
+    if (this.elSpotlightSpeakerLabel) this.elSpotlightSpeakerLabel.textContent = 'Bàn Đấu Nhóm';
+    if (this.elRecentChainFlow) this.elRecentChainFlow.innerHTML = '';
+    if (this.elMetaPlayersText) this.elMetaPlayersText.textContent = 'Bàn đấu nhóm';
+    if (this.elMetaStatusText) {
+      this.elMetaStatusText.textContent = 'Chờ vào bàn';
+      this.elMetaStatusText.style.cursor = 'default';
+    }
+    if (this.elMetaChainText) this.elMetaChainText.textContent = '0 từ';
+
+    if (this.elInput) {
+      this.elInput.disabled = true;
+      this.elInput.value = '';
+      this.elInput.placeholder = 'Tạo hoặc vào bàn để bắt đầu...';
+    }
+    if (this.elHintText) {
+      this.elHintText.textContent = 'Tạo bàn mới hoặc nhập mã PIN 4 chữ số để cùng chơi!';
+    }
+
+    // Xóa ghế bot ở 12h
+    const topSeats = document.getElementById('table-top-seats');
+    const leftSeats = document.getElementById('table-left-seats');
+    const rightSeats = document.getElementById('table-right-seats');
+    if (topSeats) topSeats.innerHTML = '';
+    if (leftSeats) leftSeats.innerHTML = '';
+    if (rightSeats) rightSeats.innerHTML = '';
+
+    // Ghế 6h luôn là Bạn
+    if (this.elTableBottomSeats) {
+      this.elTableBottomSeats.innerHTML = `
+        <div class="player-seat is-me" title="Hướng 6h: Vị trí của Bạn">
+          <div class="seat-avatar-wrap">
+            <div class="seat-avatar">${this.player.avatar || '🐱'}</div>
+          </div>
+          <div class="seat-meta">
+            <div class="seat-name-row">
+              <span class="seat-name">${this.player.name || 'Người Chơi'}</span>
+              <span class="seat-clock-tag">6h • Bạn</span>
+            </div>
+            <span class="seat-stat">${this.score || 0}đ</span>
+            <span class="seat-status-badge">Sẵn sàng</span>
+          </div>
+        </div>
+      `;
     }
   }
 
@@ -326,8 +384,9 @@ export class WordChainGame {
 
       if (this.elModal) this.elModal.classList.remove('active');
 
-      // Nếu chưa vào phòng nào, mở modal tạo / vào phòng
+      // Nếu chưa vào phòng nào, thiết lập bàn chờ và mở modal tạo / vào phòng
       if (!this.mpManager.currentRoom) {
+        this.resetTableForMultiplayer();
         this.mpEntryModal?.classList.add('active');
         this.mpManager.connect();
       } else {
