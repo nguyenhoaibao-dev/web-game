@@ -1,0 +1,545 @@
+/* Layout Architecture */
+
+/* Desktop Outer Container: 3-column layout (Left Ad - Phone Portal - Right Ad) */
+.arcade-viewport {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  width: 100%;
+  padding: 16px 12px;
+  gap: 20px;
+}
+
+/* Side Banners (Adsense Simulation) */
+.side-ad-banner {
+  flex: 0 0 200px;
+  max-width: 220px;
+  position: sticky;
+  top: 16px;
+  display: none; /* Hiện trên Desktop >= 920px */
+}
+
+@media (min-width: 960px) {
+  .side-ad-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+/* The Phone Canvas (Portal Core) */
+.phone-container {
+  width: 100%;
+  max-width: 480px;
+  height: min(840px, calc(100vh - 32px));
+  background-color: #FFFFFF;
+  border: var(--border-thick) solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .arcade-viewport {
+    padding: 0;
+  }
+  .phone-container {
+    height: 100vh;
+    max-height: 100vh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+/* Top Status Bar / Header */
+.portal-header {
+  background-color: var(--secondary);
+  border-bottom: var(--border-thick) solid var(--border-color);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.portal-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.brand-icon-box {
+  width: 42px;
+  height: 42px;
+  background-color: var(--primary);
+  border: 3px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #fff;
+  transform: rotate(-4deg);
+}
+
+.brand-title {
+  font-size: 1.35rem;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  color: var(--text-dark);
+}
+
+.brand-title span {
+  color: var(--primary);
+}
+
+/* User Profile Badge in Header */
+.user-profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coin-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #FFFFFF;
+  border: 2.5px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.coin-icon {
+  font-size: 1.1rem;
+  animation: bounceSlow 2s infinite ease-in-out;
+}
+
+.avatar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background-color: var(--accent);
+  border: 2.5px solid var(--border-color);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.avatar-btn:hover {
+  transform: scale(1.08);
+}
+
+.avatar-btn:active {
+  transform: scale(0.95);
+}
+
+/* Main Content Area */
+.portal-content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  background-color: var(--bg-main);
+}
+
+/* Hero / Welcome Banner */
+.welcome-card {
+  background: linear-gradient(135deg, #FFE873 0%, #FFC000 100%);
+  border: var(--border-thick) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-info {
+  position: relative;
+  z-index: 2;
+}
+
+.welcome-title {
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+
+.welcome-desc {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  background: #FFFFFF;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+}
+
+/* In-feed Ad Banner */
+.infeed-ad {
+  background-color: #FFFDF0;
+  border: 3px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.infeed-ad:hover {
+  transform: scale(1.01);
+}
+
+.ad-tag {
+  position: absolute;
+  top: -9px;
+  right: 12px;
+  background-color: #111;
+  color: #FFF;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.ad-art {
+  width: 50px;
+  height: 50px;
+  background: var(--blue);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  box-shadow: 2px 2px 0 #111;
+}
+
+.ad-body {
+  flex: 1;
+}
+
+.ad-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.ad-subtitle {
+  font-size: 0.78rem;
+  color: #555;
+  font-weight: 600;
+}
+
+/* Section Titles */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Game Grid */
+.game-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.game-card {
+  background-color: #FFFFFF;
+  border: var(--border-thick) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  position: relative;
+}
+
+.game-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--border-color);
+}
+
+.game-card-top {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.game-thumbnail {
+  width: 72px;
+  height: 72px;
+  border: 3px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  flex-shrink: 0;
+}
+
+.game-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.game-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.game-name {
+  font-size: 1.15rem;
+  font-family: var(--font-heading);
+  font-weight: 800;
+}
+
+.game-desc {
+  font-size: 0.84rem;
+  color: #555;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.game-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #333;
+  margin-top: 2px;
+}
+
+.game-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 2px dashed #ddd;
+}
+
+.high-score-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background-color: #FFF6D6;
+  border: 2px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+/* Footer in Portal */
+.portal-footer {
+  padding: 16px;
+  text-align: center;
+  border-top: 3px solid var(--border-color);
+  background-color: #FFFFFF;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #777;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Fullscreen / In-Phone Game Player Modal */
+.game-player-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #FFFFFF;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s;
+}
+
+.game-player-screen.active {
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.portal-close-game-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border: 2.5px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 2px 2px 0px var(--border-color);
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 150;
+  user-select: none;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.portal-close-game-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px var(--border-color);
+}
+
+.game-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: var(--bg-main);
+}
+
+/* Edit Player Name Dialog */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  padding: 16px;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 380px;
+  background-color: var(--bg-card);
+  border: var(--border-thick) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: scale(0.9);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-overlay.active .modal-box {
+  transform: scale(1);
+}
+
+.modal-title {
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar-selector {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.avatar-option {
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.avatar-option:hover {
+  transform: scale(1.1);
+}
+
+.avatar-option.selected {
+  background-color: var(--secondary);
+  box-shadow: 3px 3px 0 #111;
+  border-color: #111;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}

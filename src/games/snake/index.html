@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Rắn Săn Mồi Bự - Mini-game giải trí cổ điển phong cách Cartoon Neubrutalism">
+  <title>Rắn Săn Mồi Bự - Arcade Web</title>
+
+  <!-- Google Fonts: Fredoka & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/global.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 1. Header (Top) -->
+  <header class="game-header">
+    <button class="btn-icon-neu" id="btn-back-portal" title="Quay lại trang chủ">
+      ⬅️
+    </button>
+
+    <div class="user-score-box">
+      <span class="player-avatar-small" id="player-avatar-small">🐍</span>
+      <span class="player-name-label" id="player-name-label">Người Chơi</span>
+      <span class="current-score-badge" id="snake-score">0đ</span>
+    </div>
+
+    <button class="btn-icon-neu" id="btn-sound-toggle" title="Bật/Tắt âm thanh">
+      🔊
+    </button>
+  </header>
+
+  <!-- 2. Khu vực Game Canvas -->
+  <main class="game-arena">
+    <div class="canvas-wrapper">
+      <canvas id="snake-canvas" width="320" height="320"></canvas>
+    </div>
+  </main>
+
+  <!-- 3. Khu vực Phím Điều Khiển Cảm Ứng (Touch D-Pad) -->
+  <footer class="controls-container">
+    <div class="dpad-layout">
+      <button class="btn-dpad up" id="btn-up" aria-label="Lên">⬆️</button>
+      <button class="btn-dpad left" id="btn-left" aria-label="Trái">⬅️</button>
+      <button class="btn-dpad down" id="btn-down" aria-label="Xuống">⬇️</button>
+      <button class="btn-dpad right" id="btn-right" aria-label="Phải">➡️</button>
+    </div>
+  </footer>
+
+  <!-- 4. Game Over Modal -->
+  <div class="game-modal-overlay" id="game-over-modal" aria-modal="true" role="dialog">
+    <div class="game-modal-card">
+      <div class="modal-header-art">🐍</div>
+      <h2 class="modal-game-title" id="modal-title">💥 GAME OVER</h2>
+      <p class="modal-game-reason" id="modal-reason">Rắn đã va vào chướng ngại vật!</p>
+
+      <div class="modal-score-box">
+        <div class="score-stat-item">
+          <span class="score-stat-label">Điểm ván</span>
+          <span class="score-stat-value" id="final-score">0</span>
+        </div>
+        <div class="score-stat-item">
+          <span class="score-stat-label">Kỷ lục</span>
+          <span class="score-stat-value" id="final-record" style="color: #FF4A3F;">0</span>
+        </div>
+      </div>
+
+      <div class="modal-actions-col">
+        <button class="btn-neu btn-primary" id="btn-restart" style="width: 100%; padding: 12px;">
+          🔄 CHƠI LẠI NGAY
+        </button>
+        <button class="btn-neu" id="btn-exit" style="width: 100%; padding: 10px; background-color: #F0F0F0;">
+          🏠 VỀ TRANG CHỦ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Script -->
+  <script type="module" src="logic.js"></script>
+</body>
+</html>
