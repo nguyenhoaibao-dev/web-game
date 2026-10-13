@@ -23,6 +23,7 @@ export class WordChainGame {
     this.timeLeft = this.soloTurnTimeLimit;
     this.isPlayerTurn = false;
     this.isGameOver = false;
+    this.activeSoloBubbles = new Map(); // 'bot' | 'user' -> { text, status, detail, expiresAt }
 
     // Lấy thông tin player từ localStorage hoặc mặc định
     this.player = this.loadPlayerInfo();
@@ -101,6 +102,13 @@ export class WordChainGame {
       if (e.key === 'Enter') {
         e.preventDefault();
         this.handleGeneralSubmit();
+      }
+    });
+
+    // Phát tín hiệu đang gõ chữ cho đối thủ (Multiplayer)
+    this.elInput?.addEventListener('input', () => {
+      if (this.mode === 'multi') {
+        this.mpManager.sendTypingPreview(this.elInput?.value || '');
       }
     });
 
@@ -446,8 +454,24 @@ export class WordChainGame {
     // Hướng 12h (Đối diện): Bot Thông Thái
     if (this.elTableTopSeats) {
       const isBotTurn = (activeTurn === 'bot');
+      let botBubbleHtml = '';
+      const activeBot = this.activeSoloBubbles.get('bot');
+      if (activeBot && activeBot.expiresAt > Date.now()) {
+        const icon = activeBot.status === 'correct' ? '✅' : (activeBot.status === 'wrong' ? '❌' : '✍️');
+        const detailBadge = activeBot.detail ? `<span class="bubble-badge">${activeBot.detail}</span>` : '';
+        botBubbleHtml = `
+          <div class="seat-speech-bubble ${activeBot.status}">
+            <span class="bubble-word">${icon} "${activeBot.text}"</span>
+            ${detailBadge}
+          </div>
+        `;
+      }
+
       this.elTableTopSeats.innerHTML = `
         <div class="player-seat ${isBotTurn ? 'is-turn' : ''}" title="Hướng 12h: Bot Thông Thái">
+          <div class="seat-bubble-container" id="seat-bubble-bot">
+            ${botBubbleHtml}
+          </div>
           <div class="seat-avatar-wrap">
             <div class="seat-avatar">🤖</div>
             ${isBotTurn ? '<div class="seat-turn-dot"></div>' : ''}
@@ -469,8 +493,24 @@ export class WordChainGame {
     // Hướng 6h (Chính diện - Vị trí mặc định của Bạn!): Player
     if (this.elTableBottomSeats) {
       const isPlayerTurn = (activeTurn === 'user');
+      let userBubbleHtml = '';
+      const activeUser = this.activeSoloBubbles.get('user');
+      if (activeUser && activeUser.expiresAt > Date.now()) {
+        const icon = activeUser.status === 'correct' ? '✅' : (activeUser.status === 'wrong' ? '❌' : '✍️');
+        const detailBadge = activeUser.detail ? `<span class="bubble-badge">${activeUser.detail}</span>` : '';
+        userBubbleHtml = `
+          <div class="seat-speech-bubble ${activeUser.status}">
+            <span class="bubble-word">${icon} "${activeUser.text}"</span>
+            ${detailBadge}
+          </div>
+        `;
+      }
+
       this.elTableBottomSeats.innerHTML = `
         <div class="player-seat is-me ${isPlayerTurn ? 'is-turn' : ''}" title="Hướng 6h: Vị trí của Bạn">
+          <div class="seat-bubble-container" id="seat-bubble-user">
+            ${userBubbleHtml}
+          </div>
           <div class="seat-avatar-wrap">
             <div class="seat-avatar">${this.player.avatar || '🐱'}</div>
             ${isPlayerTurn ? '<div class="seat-turn-dot"></div>' : ''}
@@ -558,6 +598,7 @@ export class WordChainGame {
     setTimeout(() => {
       this.addChatBubble('bot', this.currentWord);
       this.updateTableCenter(this.currentWord, 'Bot');
+      this.showSoloSeatBubble('bot', this.currentWord, 'correct');
       sounds.playPop();
       this.startPlayerTurn();
     }, 400);
@@ -646,6 +687,55 @@ export class WordChainGame {
   }
 
   /**
+   * Hiển thị bóng thoại trên ghế người chơi hoặc Bot ở chế độ Solo
+   */
+  showSoloSeatBubble(target, text, status = 'correct', detail = '') {
+    if (!target) return;
+    const duration = status === 'wrong' ? 3200 : (status === 'typing' ? 2200 : 2600);
+    const expiresAt = Date.now() + duration;
+
+    this.activeSoloBubbles.set(target, {
+      text,
+      status,
+      detail,
+      expiresAt
+    });
+
+    const containerId = target === 'user' ? 'seat-bubble-user' : 'seat-bubble-bot';
+    const container = document.getElementById(containerId);
+    if (container) {
+      if (container._bubbleTimer) clearTimeout(container._bubbleTimer);
+
+      const icon = status === 'correct' ? '✅' : (status === 'wrong' ? '❌' : '✍️');
+      const detailBadge = detail ? `<span class="bubble-badge">${detail}</span>` : '';
+
+      container.innerHTML = `
+        <div class="seat-speech-bubble ${status}">
+          <span class="bubble-word">${icon} "${text}"</span>
+          ${detailBadge}
+        </div>
+      `;
+
+      container._bubbleTimer = setTimeout(() => {
+        const bubble = container.querySelector('.seat-speech-bubble');
+        if (bubble) {
+          bubble.classList.add('fade-out');
+          setTimeout(() => {
+            if (this.activeSoloBubbles.get(target)?.expiresAt <= Date.now()) {
+              this.activeSoloBubbles.delete(target);
+            }
+            if (container.querySelector('.seat-speech-bubble') === bubble) {
+              container.innerHTML = '';
+            }
+          }, 260);
+        } else {
+          this.activeSoloBubbles.delete(target);
+        }
+      }, duration);
+    }
+  }
+
+  /**
    * Xử lý người chơi bấm gửi từ (Solo)
    */
   handlePlayerSubmit() {
@@ -653,6 +743,7 @@ export class WordChainGame {
 
     const rawInput = (this.elInput?.value || '').trim();
     if (!rawInput) {
+      this.showSoloSeatBubble('user', '---', 'wrong', 'Chưa nhập từ nào');
       this.showInputError('Bạn chưa nhập từ nào!');
       return;
     }
@@ -661,6 +752,7 @@ export class WordChainGame {
 
     // 1. Kiểm tra số tiếng
     if (dictionary.countSyllables(cleanInput) !== 2) {
+      this.showSoloSeatBubble('user', rawInput, 'wrong', 'Phải có 2 tiếng');
       this.showInputError('Từ phải có chính xác 2 tiếng!');
       return;
     }
@@ -668,6 +760,7 @@ export class WordChainGame {
     // 2. Nhận diện từ trong từ điển (hỗ trợ cả có dấu và không dấu)
     const matchedWord = dictionary.resolveWord(cleanInput);
     if (!matchedWord) {
+      this.showSoloSeatBubble('user', rawInput, 'wrong', 'Không có trong từ điển');
       this.showInputError(`Từ "${cleanInput}" chưa có trong từ điển tiếng Việt!`);
       return;
     }
@@ -678,12 +771,14 @@ export class WordChainGame {
     const inputParts = dictionary.splitWords(matchedWord);
 
     if (!inputParts || !dictionary.syllablesMatch(inputParts.first, expectedFirstSyllable)) {
+      this.showSoloSeatBubble('user', rawInput, 'wrong', `Phải bắt đầu bằng "${expectedFirstSyllable}"`);
       this.showInputError(`Tiếng đầu tiên phải là "${expectedFirstSyllable}"!`);
       return;
     }
 
     // 4. Kiểm tra từ đã dùng chưa
     if (this.usedWords.has(matchedWord)) {
+      this.showSoloSeatBubble('user', matchedWord, 'wrong', 'Từ đã dùng rồi');
       this.showInputError(`Từ "${matchedWord}" đã được sử dụng rồi!`);
       return;
     }
@@ -704,6 +799,9 @@ export class WordChainGame {
     this.updateScoreUI();
 
     sounds.playCorrect();
+
+    // Hiện bóng thoại màu xanh hợp lệ trên ghế người chơi
+    this.showSoloSeatBubble('user', matchedWord, 'correct', `+${roundScore}đ`);
 
     // Thêm từ vào bàn đấu
     this.addChatBubble('user', matchedWord, `+${roundScore}đ`);
@@ -729,6 +827,7 @@ export class WordChainGame {
       this.elHintText.innerHTML = `🤖 Bot đang suy nghĩ...`;
     }
     this.renderSoloSeats('bot');
+    this.showSoloSeatBubble('bot', '...', 'typing');
 
     const typingEl = this.showTypingIndicator();
 
@@ -758,6 +857,7 @@ export class WordChainGame {
       this.botWordCount = (this.botWordCount || 0) + 1;
 
       sounds.playPop();
+      this.showSoloSeatBubble('bot', chosenWord, 'correct');
       this.addChatBubble('bot', chosenWord);
       this.updateTableCenter(chosenWord, 'Bot');
 

@@ -409,6 +409,185 @@ body {
   border-color: var(--border-c);
 }
 
+/* ============================================================
+   BONG BÓNG THOẠI PHÁT NGÔN TRÊN GHẾ (SEAT SPEECH BUBBLE)
+   ============================================================ */
+.seat-bubble-container {
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+}
+
+.bottom-seats .seat-bubble-container {
+  top: -42px;
+}
+
+.top-seats .seat-bubble-container {
+  bottom: -38px;
+  top: auto;
+}
+
+.seat-speech-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  animation: bubblePop 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background-color: #ffffff;
+  position: relative;
+}
+
+/* Mũi tên chỉ xuống cho các ghế dưới / ngang */
+.seat-speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px 5px 0;
+  border-style: solid;
+  border-color: #ffffff transparent transparent;
+}
+
+/* Mũi tên chỉ lên cho các ghế hàng trên */
+.top-seats .seat-speech-bubble::after {
+  bottom: auto;
+  top: -5px;
+  border-width: 0 5px 5px;
+  border-style: solid;
+  border-color: transparent transparent #ffffff;
+}
+
+/* Từ đúng: Xanh ngọc nổi bật */
+.seat-speech-bubble.correct {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1.5px solid #10b981;
+}
+.seat-speech-bubble.correct::after {
+  border-color: #10b981 transparent transparent;
+}
+.top-seats .seat-speech-bubble.correct::after {
+  border-color: transparent transparent #10b981;
+}
+
+/* Từ sai: Đỏ cảnh báo kèm hiệu ứng rung lắc */
+.seat-speech-bubble.wrong {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1.5px solid #ef4444;
+  animation: bubbleShake 0.35s ease-in-out;
+}
+.seat-speech-bubble.wrong::after {
+  border-color: #ef4444 transparent transparent;
+}
+.top-seats .seat-speech-bubble.wrong::after {
+  border-color: transparent transparent #ef4444;
+}
+
+/* Đang gõ: Xám nhẹ tối giản */
+.seat-speech-bubble.typing {
+  background-color: #ffffff;
+  color: var(--text-dark);
+  border: 1px dashed var(--border-c);
+}
+.seat-speech-bubble.typing::after {
+  border-color: var(--border-c) transparent transparent;
+}
+.top-seats .seat-speech-bubble.typing::after {
+  border-color: transparent transparent var(--border-c);
+}
+
+/* Ghế bên trái (9h) - bong bóng chỉ sang phải vào tâm bàn */
+.table-side-seat.left-seat .seat-bubble-container {
+  top: 50%;
+  left: 105%;
+  transform: translateY(-50%);
+}
+.table-side-seat.left-seat .seat-speech-bubble::after {
+  left: -5px;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  border-width: 5px 5px 5px 0;
+  border-color: transparent #ffffff transparent transparent;
+}
+.table-side-seat.left-seat .seat-speech-bubble.correct::after {
+  border-color: transparent #10b981 transparent transparent;
+}
+.table-side-seat.left-seat .seat-speech-bubble.wrong::after {
+  border-color: transparent #ef4444 transparent transparent;
+}
+.table-side-seat.left-seat .seat-speech-bubble.typing::after {
+  border-color: transparent var(--border-c) transparent transparent;
+}
+
+/* Ghế bên phải (3h) - bong bóng chỉ sang trái vào tâm bàn */
+.table-side-seat.right-seat .seat-bubble-container {
+  top: 50%;
+  left: auto;
+  right: 105%;
+  transform: translateY(-50%);
+}
+.table-side-seat.right-seat .seat-speech-bubble::after {
+  left: auto;
+  right: -5px;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  border-width: 5px 0 5px 5px;
+  border-color: transparent transparent transparent #ffffff;
+}
+.table-side-seat.right-seat .seat-speech-bubble.correct::after {
+  border-color: transparent transparent transparent #10b981;
+}
+.table-side-seat.right-seat .seat-speech-bubble.wrong::after {
+  border-color: transparent transparent transparent #ef4444;
+}
+.table-side-seat.right-seat .seat-speech-bubble.typing::after {
+  border-color: transparent transparent transparent var(--border-c);
+}
+
+.bubble-word {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+.bubble-badge {
+  font-size: 0.68rem;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.seat-speech-bubble.fade-out {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: all 0.25s ease;
+}
+
+@keyframes bubblePop {
+  0% { transform: scale(0.65); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bubbleShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
 .seat-avatar-wrap {
   position: relative;
   flex-shrink: 0;

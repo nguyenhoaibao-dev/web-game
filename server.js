@@ -398,10 +398,27 @@ function handleClientMessage(ws, data) {
       break;
     }
 
+    case 'TYPING_PREVIEW': {
+      if (!ws.roomCode) return;
+      const room = rooms.get(ws.roomCode);
+      if (!room || room.state !== 'PLAYING') return;
+      if (room.currentTurnPlayerId !== ws.id) return;
+
+      const text = (data.text || '').trim().slice(0, 30);
+      broadcastToRoom(room, {
+        type: 'PLAYER_TYPING',
+        playerId: ws.id,
+        text: text
+      }, ws);
+      break;
+    }
+
     case 'SUBMIT_WORD': {
       if (!ws.roomCode) return;
       const room = rooms.get(ws.roomCode);
       if (!room || room.state !== 'PLAYING') return;
+
+      const player = room.players.find(p => p.id === ws.id);
 
       if (room.currentTurnPlayerId !== ws.id) {
         ws.send(JSON.stringify({ type: 'WORD_REJECTED', reason: 'Chưa đến lượt của bạn!' }));
@@ -411,14 +428,30 @@ function handleClientMessage(ws, data) {
       const rawInput = (data.word || '').trim();
       const clean = dictionary.normalize(rawInput);
 
+      const rejectAttempt = (reason) => {
+        const attemptWord = rawInput || clean || '---';
+        broadcastToRoom(room, {
+          type: 'WORD_ATTEMPT_FAILED',
+          playerId: ws.id,
+          playerName: player ? player.name : 'Người chơi',
+          word: attemptWord,
+          reason: reason
+        });
+      };
+
+      if (!clean) {
+        rejectAttempt('Chưa nhập từ nào!');
+        return;
+      }
+
       if (dictionary.countSyllables(clean) !== 2) {
-        ws.send(JSON.stringify({ type: 'WORD_REJECTED', reason: 'Từ phải có chính xác 2 tiếng!' }));
+        rejectAttempt('Từ phải có chính xác 2 tiếng!');
         return;
       }
 
       const resolved = dictionary.resolveWord(clean);
       if (!resolved) {
-        ws.send(JSON.stringify({ type: 'WORD_REJECTED', reason: `Từ "${clean}" chưa có trong từ điển tiếng Việt!` }));
+        rejectAttempt(`Từ "${clean}" chưa có trong từ điển tiếng Việt!`);
         return;
       }
 
@@ -427,12 +460,12 @@ function handleClientMessage(ws, data) {
       const currParts = dictionary.splitWords(resolved);
 
       if (!currParts || !dictionary.syllablesMatch(currParts.first, expectedFirst)) {
-        ws.send(JSON.stringify({ type: 'WORD_REJECTED', reason: `Tiếng đầu tiên phải là "${expectedFirst}"!` }));
+        rejectAttempt(`Tiếng đầu tiên phải là "${expectedFirst}"!`);
         return;
       }
 
       if (room.usedWords.has(resolved)) {
-        ws.send(JSON.stringify({ type: 'WORD_REJECTED', reason: `Từ "${resolved}" đã được dùng rồi!` }));
+        rejectAttempt(`Từ "${resolved}" đã được dùng rồi!`);
         return;
       }
 
@@ -445,7 +478,6 @@ function handleClientMessage(ws, data) {
       room.usedWords.add(resolved);
       room.currentWord = resolved;
 
-      const player = room.players.find(p => p.id === ws.id);
       const scoreGain = 10 + Math.max(1, room.timeLeft);
       player.score += scoreGain;
       player.wordsCount += 1;

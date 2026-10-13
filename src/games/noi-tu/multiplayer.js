@@ -17,6 +17,7 @@ export class MultiplayerManager {
     this.currentWord = '';
     this.targetSyllable = '';
     this.timeLeft = 12;
+    this.activeBubbles = new Map(); // playerId -> { text, status, detail, expiresAt }
 
     this.playerProfile = this.loadPlayerProfile();
     this.setupUrlRoomCheck();
@@ -179,6 +180,19 @@ export class MultiplayerManager {
     });
   }
 
+  sendTypingPreview(text) {
+    if (!this.currentRoom || this.currentRoom.state !== 'PLAYING' || !this.isMyTurn || this.isEliminated) {
+      return;
+    }
+    clearTimeout(this._typingThrottleTimer);
+    this._typingThrottleTimer = setTimeout(() => {
+      this.send({
+        type: 'TYPING_PREVIEW',
+        text: (text || '').slice(0, 30)
+      });
+    }, 80);
+  }
+
   giveUp() {
     this.send({ type: 'GIVE_UP' });
   }
@@ -263,10 +277,27 @@ export class MultiplayerManager {
         this.handleWordAcceptedUI(msg);
         break;
 
+      case 'WORD_ATTEMPT_FAILED':
+        sounds.playError();
+        this.handleWordAttemptFailedUI(msg);
+        break;
+
       case 'WORD_REJECTED':
         sounds.playError();
+        this.showSeatBubble(this.myPlayerId, msg.word || '', 'wrong', msg.reason);
         this.showToast(`❌ ${msg.reason}`);
         this.unlockInputForRetry();
+        break;
+
+      case 'PLAYER_TYPING':
+        if (msg.playerId !== this.myPlayerId) {
+          const text = (msg.text || '').trim();
+          if (text) {
+            this.showSeatBubble(msg.playerId, text, 'typing');
+          } else {
+            this.clearSeatBubble(msg.playerId, 'typing');
+          }
+        }
         break;
 
       case 'NEXT_TURN':
@@ -602,8 +633,24 @@ export class MultiplayerManager {
         }
       }
 
+      let bubbleHtml = '';
+      const activeBubble = this.activeBubbles.get(p.id);
+      if (activeBubble && activeBubble.expiresAt > Date.now()) {
+        const icon = activeBubble.status === 'correct' ? '✅' : (activeBubble.status === 'wrong' ? '❌' : '✍️');
+        const detailBadge = activeBubble.detail ? `<span class="bubble-badge">${activeBubble.detail}</span>` : '';
+        bubbleHtml = `
+          <div class="seat-speech-bubble ${activeBubble.status}">
+            <span class="bubble-word">${icon} "${activeBubble.text}"</span>
+            ${detailBadge}
+          </div>
+        `;
+      }
+
       return `
         <div class="player-seat ${isSide ? 'side-seat' : ''} ${isMe ? 'is-me' : ''} ${isTurn && !isLobby ? 'is-turn' : ''} ${isDead && !isLobby ? 'is-dead' : ''}" title="Hướng ${clockLabel}: ${p.name}">
+          <div class="seat-bubble-container" id="seat-bubble-${p.id}">
+            ${bubbleHtml}
+          </div>
           <div class="seat-avatar-wrap">
             <div class="seat-avatar">${p.avatar || '🐱'}</div>
             ${isTurn && !isDead && !isLobby ? '<div class="seat-turn-dot"></div>' : ''}
@@ -813,6 +860,70 @@ export class MultiplayerManager {
   }
 
   /**
+   * Hiển thị bóng thoại trên ghế người chơi (Đúng, Sai, hoặc Đang gõ)
+   */
+  showSeatBubble(playerId, text, status = 'correct', detail = '') {
+    if (!playerId) return;
+
+    const duration = status === 'wrong' ? 3200 : (status === 'typing' ? 2200 : 2600);
+    const expiresAt = Date.now() + duration;
+
+    this.activeBubbles.set(playerId, {
+      text,
+      status,
+      detail,
+      expiresAt
+    });
+
+    const container = document.getElementById(`seat-bubble-${playerId}`);
+    if (container) {
+      if (container._bubbleTimer) clearTimeout(container._bubbleTimer);
+
+      const icon = status === 'correct' ? '✅' : (status === 'wrong' ? '❌' : '✍️');
+      const detailBadge = detail ? `<span class="bubble-badge">${detail}</span>` : '';
+
+      container.innerHTML = `
+        <div class="seat-speech-bubble ${status}">
+          <span class="bubble-word">${icon} "${text}"</span>
+          ${detailBadge}
+        </div>
+      `;
+
+      container._bubbleTimer = setTimeout(() => {
+        const bubble = container.querySelector('.seat-speech-bubble');
+        if (bubble) {
+          bubble.classList.add('fade-out');
+          setTimeout(() => {
+            if (this.activeBubbles.get(playerId)?.expiresAt <= Date.now()) {
+              this.activeBubbles.delete(playerId);
+            }
+            if (container.querySelector('.seat-speech-bubble') === bubble) {
+              container.innerHTML = '';
+            }
+          }, 260);
+        } else {
+          this.activeBubbles.delete(playerId);
+        }
+      }, duration);
+    }
+  }
+
+  /**
+   * Xóa bóng thoại cụ thể (ví dụ khi người chơi xóa ô nhập thì ẩn bóng gõ)
+   */
+  clearSeatBubble(playerId, onlyIfStatus = null) {
+    const item = this.activeBubbles.get(playerId);
+    if (item && (!onlyIfStatus || item.status === onlyIfStatus)) {
+      this.activeBubbles.delete(playerId);
+      const container = document.getElementById(`seat-bubble-${playerId}`);
+      if (container) {
+        if (container._bubbleTimer) clearTimeout(container._bubbleTimer);
+        container.innerHTML = '';
+      }
+    }
+  }
+
+  /**
    * Thêm từ nối thành công vào bàn đấu
    */
   handleWordAcceptedUI(msg) {
@@ -828,7 +939,29 @@ export class MultiplayerManager {
       p.wordsCount = (p.wordsCount || 0) + 1;
     }
 
+    // Hiện bóng thoại đúng màu xanh trên ghế người vừa đánh
+    this.showSeatBubble(item.playerId, item.word, 'correct');
+
     this.renderTableSeats();
+
+    if (item.playerId !== this.myPlayerId) {
+      this.showToast(`✨ ${item.playerName} đã nối: "${item.word}"`);
+    }
+  }
+
+  /**
+   * Xử lý khi có người chơi gửi từ sai (hiển thị từ đó cho cả bàn thấy)
+   */
+  handleWordAttemptFailedUI(msg) {
+    // Hiển thị bóng thoại rung lắc màu đỏ trên ghế người đã nhập từ sai
+    this.showSeatBubble(msg.playerId, msg.word, 'wrong', msg.reason);
+
+    if (msg.playerId === this.myPlayerId) {
+      this.showToast(`❌ Từ "${msg.word}": ${msg.reason}`);
+      this.unlockInputForRetry();
+    } else {
+      this.showToast(`❌ ${msg.playerName} nhập sai "${msg.word}": ${msg.reason}`);
+    }
   }
 
   /**
