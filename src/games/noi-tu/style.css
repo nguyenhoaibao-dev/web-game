@@ -401,12 +401,74 @@ body {
   transform: translateY(-2px);
 }
 
-/* Người bị loại: mờ xám */
+/* Người bị loại: tối màu và tắt đèn, đợi lượt sau */
 .player-seat.is-dead {
-  opacity: 0.45;
-  filter: grayscale(1);
-  background-color: #f1f5f9;
-  border-color: var(--border-c);
+  opacity: 0.72;
+  background-color: #1e293b !important; /* Xanh đen thẫm Slate 800 */
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.player-seat.is-dead .seat-name {
+  color: #cbd5e1 !important;
+}
+
+.player-seat.is-dead .seat-avatar {
+  filter: grayscale(1) opacity(0.5);
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+}
+
+.player-seat.is-dead .seat-win-badge {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #94a3b8 !important;
+}
+
+.player-seat.is-dead .seat-status-dead {
+  background-color: #450a0a !important;
+  color: #fca5a5 !important;
+  border-color: #7f1d1d !important;
+}
+
+/* Huy hiệu số lượt thắng trên bàn */
+.seat-win-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #b45309;
+  background-color: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 1px 6px;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.player-seat.side-seat .seat-win-badge {
+  font-size: 0.65rem;
+  padding: 1px 4px;
+}
+
+/* Nút icon sửa tên */
+.btn-edit-name-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  padding: 0 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+}
+.btn-edit-name-icon:hover {
+  opacity: 1;
+  transform: scale(1.15);
 }
 
 /* ============================================================

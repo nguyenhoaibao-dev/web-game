@@ -100,7 +100,8 @@ function sanitizeRoom(room) {
       isReady: p.isReady,
       isAlive: p.isAlive,
       score: p.score,
-      wordsCount: p.wordsCount
+      wordsCount: p.wordsCount,
+      wins: p.wins || 0
     }))
   };
 }
@@ -153,18 +154,23 @@ function eliminatePlayer(room, playerId, reason) {
     room.state = 'ENDED';
 
     const winner = alivePlayers[0] || null;
+    if (winner) {
+      winner.wins = (winner.wins || 0) + 1;
+    }
+
     const scoreboard = [...room.players].sort((a, b) => b.score - a.score).map(p => ({
       id: p.id,
       name: p.name,
       avatar: p.avatar,
       score: p.score,
       wordsCount: p.wordsCount,
+      wins: p.wins || 0,
       isWinner: winner ? p.id === winner.id : false
     }));
 
     broadcastToRoom(room, {
       type: 'MATCH_OVER',
-      winner: winner ? { id: winner.id, name: winner.name, avatar: winner.avatar, score: winner.score } : null,
+      winner: winner ? { id: winner.id, name: winner.name, avatar: winner.avatar, score: winner.score, wins: winner.wins || 0 } : null,
       scoreboard
     });
   } else {
@@ -246,7 +252,8 @@ function handleClientMessage(ws, data) {
             isReady: true, // Host luôn sẵn sàng
             isAlive: true,
             score: 0,
-            wordsCount: 0
+            wordsCount: 0,
+            wins: 0
           }
         ]
       };
@@ -294,7 +301,8 @@ function handleClientMessage(ws, data) {
         isReady: false,
         isAlive: true,
         score: 0,
-        wordsCount: 0
+        wordsCount: 0,
+        wins: 0
       });
 
       ws.send(JSON.stringify({
@@ -558,6 +566,27 @@ function handleClientMessage(ws, data) {
         room: sanitizeRoom(room),
         event: 'Chủ phòng đã đưa tất cả về phòng chờ!'
       });
+      break;
+    }
+
+    case 'UPDATE_NAME': {
+      const newName = (data.name || '').trim().slice(0, 20);
+      if (!newName) return;
+      ws.playerName = newName;
+      if (ws.roomCode) {
+        const room = rooms.get(ws.roomCode);
+        if (room) {
+          const p = room.players.find(x => x.id === ws.id);
+          if (p) {
+            p.name = newName;
+            broadcastToRoom(room, {
+              type: 'ROOM_UPDATE',
+              room: sanitizeRoom(room),
+              event: `Người chơi đã đổi tên thành "${newName}"`
+            });
+          }
+        }
+      }
       break;
     }
 

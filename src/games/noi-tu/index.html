@@ -28,6 +28,7 @@
       <div class="user-score-box">
         <span class="player-avatar-small" id="player-avatar-small">🐱</span>
         <span class="player-name-label" id="player-name-label">Người Chơi</span>
+        <button class="btn-edit-name-icon" id="btn-edit-name" title="Bấm để đổi tên hiển thị của bạn">✏️</button>
         <span class="current-score-badge" id="current-score">0đ</span>
       </div>
 
@@ -164,6 +165,22 @@
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-c); padding-bottom: 10px;">
         <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-dark);">👥 BÀN ĐẤU NHÓM ONLINE</h3>
         <button class="btn-icon-neu" id="btn-close-entry-modal" style="width: 28px; height: 28px; font-size: 0.8rem;">✕</button>
+      </div>
+
+      <!-- Ô nhập tên người chơi -->
+      <div style="margin: 10px 0 6px 0; padding: 10px 12px; background: var(--bg-game); border: 1px solid var(--border-c); border-radius: 12px;">
+        <label for="input-mp-player-name" style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 5px;">👤 TÊN HIỂN THỊ CỦA BẠN:</label>
+        <div style="display: flex; gap: 8px;">
+          <input 
+            type="text" 
+            id="input-mp-player-name" 
+            class="input-neu" 
+            placeholder="Nhập tên của bạn..." 
+            maxlength="20" 
+            style="flex: 1; padding: 6px 12px; font-weight: 700; font-size: 0.95rem;"
+          />
+          <button type="button" class="btn-neu" id="btn-save-mp-name" style="padding: 0 14px; font-size: 0.85rem; font-weight: 700; white-space: nowrap;">Lưu Tên</button>
+        </div>
       </div>
 
       <div class="mp-entry-tabs">

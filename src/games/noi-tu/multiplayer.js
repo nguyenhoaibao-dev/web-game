@@ -193,6 +193,31 @@ export class MultiplayerManager {
     }, 80);
   }
 
+  updatePlayerName(newName) {
+    const clean = (newName || '').trim().slice(0, 20);
+    if (!clean) return;
+    this.playerProfile.name = clean;
+    try {
+      localStorage.setItem('ARCADE_WEB_player_profile', JSON.stringify(this.playerProfile));
+    } catch (e) {
+      console.warn(e);
+    }
+    if (this.game) {
+      this.game.player.name = clean;
+      if (this.game.elPlayerName) this.game.elPlayerName.textContent = clean;
+    }
+    if (this.currentRoom) {
+      const me = this.currentRoom.players.find(p => p.id === this.myPlayerId);
+      if (me) me.name = clean;
+    }
+    this.send({
+      type: 'UPDATE_NAME',
+      name: clean
+    });
+    this.renderTableSeats();
+    this.showToast(`✅ Đã đổi tên thành "${clean}"`);
+  }
+
   giveUp() {
     this.send({ type: 'GIVE_UP' });
   }
@@ -647,7 +672,7 @@ export class MultiplayerManager {
       }
 
       return `
-        <div class="player-seat ${isSide ? 'side-seat' : ''} ${isMe ? 'is-me' : ''} ${isTurn && !isLobby ? 'is-turn' : ''} ${isDead && !isLobby ? 'is-dead' : ''}" title="Hướng ${clockLabel}: ${p.name}">
+        <div class="player-seat ${isSide ? 'side-seat' : ''} ${isMe ? 'is-me' : ''} ${isTurn && !isLobby ? 'is-turn' : ''} ${isDead && !isLobby ? 'is-dead' : ''}" title="${p.name}">
           <div class="seat-bubble-container" id="seat-bubble-${p.id}">
             ${bubbleHtml}
           </div>
@@ -659,10 +684,9 @@ export class MultiplayerManager {
             <div class="seat-name-row">
               <span class="seat-name">${p.name} ${isMe ? '(Bạn)' : ''}</span>
               ${isHost ? '<span class="seat-host-badge" title="Chủ bàn">👑</span>' : ''}
-              <span class="seat-clock-tag">${clockLabel}</span>
             </div>
-            <span class="seat-stat">${p.score || 0}đ • ${p.wordsCount || 0} từ</span>
-            ${statusBadge}
+            <span class="seat-win-badge" title="Số vòng đấu đã thắng">🏆 ${p.wins || 0} thắng</span>
+            ${isLobby ? statusBadge : (isDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : (isTurn ? '<span class="seat-status-badge seat-status-turn">👉 Đến lượt</span>' : ''))}
           </div>
         </div>
       `;
@@ -989,6 +1013,14 @@ export class MultiplayerManager {
     const winner = msg.winner;
     const scoreboard = msg.scoreboard || [];
     const isMeWinner = winner && (winner.id === this.myPlayerId);
+
+    if (winner) {
+      const p = this.currentRoom?.players.find(x => x.id === winner.id);
+      if (p) {
+        p.wins = winner.wins || (p.wins || 0) + 1;
+      }
+    }
+    this.renderTableSeats();
 
     // Thưởng xu cho người chơi
     let rewardCoins = 15; // xu an ủi tham gia

@@ -23,6 +23,9 @@ export class WordChainGame {
     this.timeLeft = this.soloTurnTimeLimit;
     this.isPlayerTurn = false;
     this.isGameOver = false;
+    this.userWins = 0;
+    this.botWins = 0;
+    this.lastWinner = null;
     this.activeSoloBubbles = new Map(); // 'bot' | 'user' -> { text, status, detail, expiresAt }
 
     // Lấy thông tin player từ localStorage hoặc mặc định
@@ -109,6 +112,18 @@ export class WordChainGame {
     this.elInput?.addEventListener('input', () => {
       if (this.mode === 'multi') {
         this.mpManager.sendTypingPreview(this.elInput?.value || '');
+      }
+    });
+
+    // Nút chỉnh sửa tên hiển thị
+    document.getElementById('btn-edit-name')?.addEventListener('click', () => {
+      const current = this.player.name || 'Người Chơi';
+      const entered = prompt('Nhập tên hiển thị mới của bạn (tối đa 20 ký tự):', current);
+      if (entered !== null) {
+        const clean = entered.trim().slice(0, 20);
+        if (clean) {
+          this.updatePlayerName(clean);
+        }
       }
     });
 
@@ -257,10 +272,33 @@ export class WordChainGame {
       updateSelectedTime(inputCustomTime.value);
     });
 
+    // Tên người chơi trong modal Đấu Nhóm
+    const inputMpName = document.getElementById('input-mp-player-name');
+    const btnSaveMpName = document.getElementById('btn-save-mp-name');
+    if (inputMpName) inputMpName.value = this.player.name || 'Người Chơi';
+
+    const saveNameFromModal = () => {
+      const clean = (inputMpName?.value || '').trim().slice(0, 20);
+      if (clean) {
+        this.updatePlayerName(clean);
+        this.mpManager.showToast(`✅ Đã lưu tên: "${clean}"`);
+      }
+    };
+    btnSaveMpName?.addEventListener('click', saveNameFromModal);
+    inputMpName?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveNameFromModal();
+      }
+    });
+
     // Nút Vào phòng bằng PIN
     const btnJoinPin = document.getElementById('btn-join-pin');
     const inputPin = document.getElementById('input-pin-code');
     btnJoinPin?.addEventListener('click', () => {
+      if (inputMpName && inputMpName.value.trim()) {
+        this.updatePlayerName(inputMpName.value.trim());
+      }
       const pin = (inputPin?.value || '').trim();
       if (pin.length !== 4) {
         this.mpManager.showToast('Vui lòng nhập đủ 4 chữ số PIN!');
@@ -274,6 +312,9 @@ export class WordChainGame {
     // Nút Tạo phòng mới
     const btnCreateNow = document.getElementById('btn-create-now');
     btnCreateNow?.addEventListener('click', () => {
+      if (inputMpName && inputMpName.value.trim()) {
+        this.updatePlayerName(inputMpName.value.trim());
+      }
       const customVal = Number(inputCustomTime?.value) || selectedTurnTime;
       const finalTurnTime = Math.max(5, Math.min(60, customVal));
       btnCreateNow.disabled = true;
@@ -341,20 +382,41 @@ export class WordChainGame {
     // Ghế 6h luôn là Bạn
     if (this.elTableBottomSeats) {
       this.elTableBottomSeats.innerHTML = `
-        <div class="player-seat is-me" title="Hướng 6h: Vị trí của Bạn">
+        <div class="player-seat is-me" title="${this.player.name || 'Người Chơi'}">
           <div class="seat-avatar-wrap">
             <div class="seat-avatar">${this.player.avatar || '🐱'}</div>
           </div>
           <div class="seat-meta">
             <div class="seat-name-row">
-              <span class="seat-name">${this.player.name || 'Người Chơi'}</span>
-              <span class="seat-clock-tag">6h • Bạn</span>
+              <span class="seat-name">${this.player.name || 'Người Chơi'} (Bạn)</span>
             </div>
-            <span class="seat-stat">${this.score || 0}đ</span>
-            <span class="seat-status-badge">Sẵn sàng</span>
+            <span class="seat-win-badge" title="Số vòng đấu đã thắng">🏆 0 thắng</span>
+            <span class="seat-status-badge">⏳ Chờ vào bàn</span>
           </div>
         </div>
       `;
+    }
+  }
+
+  /**
+   * Cập nhật tên người chơi và đồng bộ toàn hệ thống
+   */
+  updatePlayerName(newName) {
+    const clean = (newName || '').trim().slice(0, 20);
+    if (!clean) return;
+    this.player.name = clean;
+    try {
+      localStorage.setItem('ARCADE_WEB_player_profile', JSON.stringify(this.player));
+    } catch (e) {
+      console.warn(e);
+    }
+    if (this.elPlayerName) this.elPlayerName.textContent = clean;
+    const inputMpName = document.getElementById('input-mp-player-name');
+    if (inputMpName) inputMpName.value = clean;
+
+    this.mpManager.updatePlayerName(clean);
+    if (this.mode === 'solo') {
+      this.renderSoloSeats(this.isPlayerTurn ? 'user' : 'bot');
     }
   }
 
@@ -451,9 +513,13 @@ export class WordChainGame {
     if (leftSeats) leftSeats.innerHTML = '';
     if (rightSeats) rightSeats.innerHTML = '';
 
+    const isBotDead = this.isGameOver && this.lastWinner === 'user';
+    const isUserDead = this.isGameOver && this.lastWinner === 'bot';
+    const isBotTurn = (activeTurn === 'bot') && !this.isGameOver;
+    const isPlayerTurn = (activeTurn === 'user') && !this.isGameOver;
+
     // Hướng 12h (Đối diện): Bot Thông Thái
     if (this.elTableTopSeats) {
-      const isBotTurn = (activeTurn === 'bot');
       let botBubbleHtml = '';
       const activeBot = this.activeSoloBubbles.get('bot');
       if (activeBot && activeBot.expiresAt > Date.now()) {
@@ -468,31 +534,27 @@ export class WordChainGame {
       }
 
       this.elTableTopSeats.innerHTML = `
-        <div class="player-seat ${isBotTurn ? 'is-turn' : ''}" title="Hướng 12h: Bot Thông Thái">
+        <div class="player-seat ${isBotDead ? 'is-dead' : (isBotTurn ? 'is-turn' : '')}" title="Bot Thông Thái">
           <div class="seat-bubble-container" id="seat-bubble-bot">
             ${botBubbleHtml}
           </div>
           <div class="seat-avatar-wrap">
             <div class="seat-avatar">🤖</div>
-            ${isBotTurn ? '<div class="seat-turn-dot"></div>' : ''}
+            ${isBotTurn && !isBotDead ? '<div class="seat-turn-dot"></div>' : ''}
           </div>
           <div class="seat-meta">
             <div class="seat-name-row">
               <span class="seat-name">Bot Thông Thái</span>
-              <span class="seat-clock-tag">12h</span>
             </div>
-            <span class="seat-stat">${this.botWordCount || 0} từ</span>
-            <span class="seat-status-badge ${isBotTurn ? 'seat-status-turn' : ''}">
-              ${isBotTurn ? '⚡ Đang suy nghĩ' : '⏳ Chờ lượt'}
-            </span>
+            <span class="seat-win-badge" title="Số vòng thắng">🏆 ${this.botWins || 0} thắng</span>
+            ${isBotDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : (isBotTurn ? '<span class="seat-status-badge seat-status-turn">⚡ Đang nghĩ</span>' : '')}
           </div>
         </div>
       `;
     }
 
-    // Hướng 6h (Chính diện - Vị trí mặc định của Bạn!): Player
+    // Hướng 6h (Chính diện - Vị trí của Bạn): Player
     if (this.elTableBottomSeats) {
-      const isPlayerTurn = (activeTurn === 'user');
       let userBubbleHtml = '';
       const activeUser = this.activeSoloBubbles.get('user');
       if (activeUser && activeUser.expiresAt > Date.now()) {
@@ -507,23 +569,20 @@ export class WordChainGame {
       }
 
       this.elTableBottomSeats.innerHTML = `
-        <div class="player-seat is-me ${isPlayerTurn ? 'is-turn' : ''}" title="Hướng 6h: Vị trí của Bạn">
+        <div class="player-seat is-me ${isUserDead ? 'is-dead' : (isPlayerTurn ? 'is-turn' : '')}" title="${this.player.name || 'Người Chơi'}">
           <div class="seat-bubble-container" id="seat-bubble-user">
             ${userBubbleHtml}
           </div>
           <div class="seat-avatar-wrap">
             <div class="seat-avatar">${this.player.avatar || '🐱'}</div>
-            ${isPlayerTurn ? '<div class="seat-turn-dot"></div>' : ''}
+            ${isPlayerTurn && !isUserDead ? '<div class="seat-turn-dot"></div>' : ''}
           </div>
           <div class="seat-meta">
             <div class="seat-name-row">
-              <span class="seat-name">${this.player.name || 'Người Chơi'}</span>
-              <span class="seat-clock-tag">6h • Bạn</span>
+              <span class="seat-name">${this.player.name || 'Người Chơi'} (Bạn)</span>
             </div>
-            <span class="seat-stat">${this.score}đ • ${this.wordCount} từ</span>
-            <span class="seat-status-badge ${isPlayerTurn ? 'seat-status-turn' : ''}">
-              ${isPlayerTurn ? '👉 Đến lượt bạn' : '⏳ Chờ máy'}
-            </span>
+            <span class="seat-win-badge" title="Số vòng thắng">🏆 ${this.userWins || 0} thắng</span>
+            ${isUserDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : (isPlayerTurn ? '<span class="seat-status-badge seat-status-turn">👉 Đến lượt</span>' : '')}
           </div>
         </div>
       `;
@@ -581,6 +640,7 @@ export class WordChainGame {
     this.recentChain = [];
     this.usedWords.clear();
     this.isGameOver = false;
+    this.lastWinner = null;
     this.updateScoreUI();
 
     if (this.elModal) {
@@ -846,6 +906,8 @@ export class WordChainGame {
         sounds.playVictory();
         this.score += 50; // Thưởng chiến thắng bot
         this.updateScoreUI();
+        this.lastWinner = 'user';
+        this.userWins = (this.userWins || 0) + 1;
         this.triggerGameOver('🎉 Bot đã cạn kiệt vốn từ! Bạn đã chiến thắng xuất sắc!', true);
         return;
       }
@@ -943,7 +1005,13 @@ export class WordChainGame {
 
     if (!isVictory) {
       sounds.playGameOver();
+      this.lastWinner = 'bot';
+      this.botWins = (this.botWins || 0) + 1;
+    } else {
+      this.lastWinner = 'user';
     }
+
+    this.renderSoloSeats();
 
     // Gửi điểm số ra Portal chính
     if (window.parent !== window) {
