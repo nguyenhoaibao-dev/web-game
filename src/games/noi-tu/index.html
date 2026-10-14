@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
   <meta name="description" content="Trò chơi Nối Từ Tiếng Việt - Bàn đấu trí ngôn ngữ 2 tiếng thanh lịch, tối giản">
   <title>Bàn Đấu Nối Từ - Arcade Vui</title>
 
@@ -32,8 +32,11 @@
         <span class="current-score-badge" id="current-score">0đ</span>
       </div>
 
-      <!-- Action buttons (Turn time setting + Sound) -->
+      <!-- Action buttons (Switch Mode + Turn time setting + Sound) -->
       <div class="header-actions">
+        <button class="btn-time-neu btn-mode-toggle" id="btn-open-mode-modal" title="Chọn hoặc đổi chế độ chơi">
+          🎮 <span id="current-mode-label">Đổi chế độ</span>
+        </button>
         <button class="btn-time-neu" id="btn-solo-time" title="Cài đặt thời gian lượt">
           ⏱️ <span id="solo-time-label">12s</span>
         </button>
@@ -41,12 +44,6 @@
           🔊
         </button>
       </div>
-    </div>
-
-    <!-- Mode Switcher Tabs -->
-    <div class="mode-switcher-bar">
-      <button class="mode-tab-btn active" id="tab-solo-mode">🤖 Luyện Với Bot</button>
-      <button class="mode-tab-btn" id="tab-multi-mode">👥 Bàn Đấu Nhóm (PIN)</button>
     </div>
 
     <!-- Thanh đếm ngược thời gian chạy dọc viền dưới header -->
@@ -57,22 +54,6 @@
 
   <!-- 2. BÀN THI ĐẤU CHÍNH (TABLE ARENA) -->
   <main class="table-arena-container" id="table-arena">
-    <!-- Thanh thông tin bàn đấu (Số lượng thành viên & vòng đấu) -->
-    <div class="table-meta-bar" id="table-meta-bar">
-      <div class="meta-item meta-players" id="meta-players-count">
-        <span>👥</span>
-        <span id="meta-players-text">Bàn đấu: 2 người</span>
-      </div>
-      <div class="meta-item meta-status" id="meta-game-status">
-        <span class="status-indicator-dot"></span>
-        <span id="meta-status-text">Đang thi đấu</span>
-      </div>
-      <div class="meta-item meta-round" id="meta-chain-count">
-        <span>🔗</span>
-        <span id="meta-chain-text">0 từ đã nối</span>
-      </div>
-    </div>
-
     <!-- Khung Bàn Thi Đấu (Game Table) -->
     <div class="poker-table-wrapper">
       <div class="game-table" id="game-table">
@@ -256,6 +237,58 @@
 
   <!-- 6. Modal Kết Thúc Ván Đấu Đấu Nhóm -->
   <div class="game-modal-overlay" id="mp-game-over-modal" aria-modal="true" role="dialog"></div>
+
+  <!-- 0. Modal Chọn Chế Độ Chơi (Mặc định khi vào game) -->
+  <div class="game-modal-overlay active" id="mode-select-modal" aria-modal="true" role="dialog">
+    <div class="mode-select-card">
+      <div class="mode-select-header">
+        <div class="mode-brand-badge">🔤</div>
+        <h2 class="mode-main-title">Nối Từ Tiếng Việt</h2>
+        <p class="mode-main-subtitle">Chọn chế độ thi đấu ngôn ngữ 2 tiếng</p>
+        <button class="btn-icon-neu mode-close-btn" id="btn-close-mode-modal" style="display: none;" title="Đóng">✕</button>
+      </div>
+
+      <!-- Thông tin người chơi -->
+      <div class="mode-player-badge">
+        <div class="mode-player-meta">
+          <span class="mode-player-avatar" id="mode-select-avatar">🐱</span>
+          <span class="mode-player-name" id="mode-select-name">Người Chơi</span>
+        </div>
+        <button type="button" class="btn-neu btn-sm" id="btn-mode-edit-name">✏️ Đổi Tên</button>
+      </div>
+
+      <!-- 2 Nút Lựa Chọn Chế Độ -->
+      <div class="mode-cards-grid">
+        <!-- Chế độ 1: Luyện với Bot -->
+        <div class="mode-card" id="card-mode-bot">
+          <div class="mode-card-header">
+            <span class="mode-card-icon">🤖</span>
+            <div>
+              <h3 class="mode-card-title">Luyện Với Bot</h3>
+              <p class="mode-card-desc">Đấu trí cùng Bot Thông Thái, rèn luyện phản xạ từ vựng</p>
+            </div>
+          </div>
+          <button class="btn-neu btn-primary mode-action-btn" id="btn-choose-bot">
+            ▶️ Chơi Với Bot
+          </button>
+        </div>
+
+        <!-- Chế độ 2: Bàn Đấu Nhóm Online -->
+        <div class="mode-card" id="card-mode-multi">
+          <div class="mode-card-header">
+            <span class="mode-card-icon">👥</span>
+            <div>
+              <h3 class="mode-card-title">Bàn Đấu Nhóm (PIN)</h3>
+              <p class="mode-card-desc">Tạo bàn hoặc nhập mã PIN 4 số cùng bạn bè sinh tồn</p>
+            </div>
+          </div>
+          <button class="btn-neu btn-accent mode-action-btn" id="btn-choose-multi">
+            🚪 Vào / Tạo Bàn Nhóm
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 7. Game Over / Victory Modal (Solo) -->
   <div class="game-modal-overlay" id="game-over-modal" aria-modal="true" role="dialog">

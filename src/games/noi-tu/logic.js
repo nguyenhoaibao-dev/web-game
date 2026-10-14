@@ -72,16 +72,28 @@ export class WordChainGame {
     this.recentChain = [];
     this.botWordCount = 0;
 
-    // Multiplayer elements
+    // Multiplayer & Mode elements
     this.tabSolo = document.getElementById('tab-solo-mode');
     this.tabMulti = document.getElementById('tab-multi-mode');
     this.mpEntryModal = document.getElementById('mp-entry-modal');
+
+    // Mode Selection Modal Elements
+    this.modeModal = document.getElementById('mode-select-modal');
+    this.btnOpenModeModal = document.getElementById('btn-open-mode-modal');
+    this.currentModeLabel = document.getElementById('current-mode-label');
+    this.btnCloseModeModal = document.getElementById('btn-close-mode-modal');
+    this.modeSelectName = document.getElementById('mode-select-name');
+    this.modeSelectAvatar = document.getElementById('mode-select-avatar');
+    this.btnModeEditName = document.getElementById('btn-mode-edit-name');
+    this.btnChooseBot = document.getElementById('btn-choose-bot');
+    this.btnChooseMulti = document.getElementById('btn-choose-multi');
 
     // Multiplayer Manager
     this.mpManager = new MultiplayerManager(this);
 
     this.initEvents();
     this.setupMultiplayerUI();
+    this.setupVirtualKeyboardHandler();
   }
 
   loadPlayerInfo() {
@@ -98,8 +110,45 @@ export class WordChainGame {
 
   initEvents() {
     // Render info user
-    if (this.elPlayerName) this.elPlayerName.textContent = this.player.name || 'Người Chơi';
-    if (this.elPlayerAvatar) this.elPlayerAvatar.textContent = this.player.avatar || '🐱';
+    this.syncPlayerProfileUI();
+
+    // Sự kiện mở modal chọn chế độ từ Header
+    this.btnOpenModeModal?.addEventListener('click', () => {
+      this.openModeSelectionModal(true);
+    });
+
+    // Nút đóng modal chọn chế độ (nếu đang trong ván muốn đóng lại)
+    this.btnCloseModeModal?.addEventListener('click', () => {
+      this.closeModeSelectionModal();
+      // Tiếp tục timer nếu đang chơi solo
+      if (this.mode === 'solo' && !this.isGameOver && this.isPlayerTurn && this.timeLeft > 0) {
+        this.startTimer();
+      }
+    });
+
+    // Nút chọn Chơi Với Bot
+    this.btnChooseBot?.addEventListener('click', () => {
+      this.closeModeSelectionModal();
+      this.switchMode('solo');
+    });
+
+    // Nút chọn Bàn Đấu Nhóm
+    this.btnChooseMulti?.addEventListener('click', () => {
+      this.closeModeSelectionModal();
+      this.switchMode('multi');
+    });
+
+    // Nút đổi tên trong modal chọn chế độ
+    this.btnModeEditName?.addEventListener('click', () => {
+      const current = this.player.name || 'Người Chơi';
+      const entered = prompt('Nhập tên hiển thị mới của bạn (tối đa 20 ký tự):', current);
+      if (entered !== null) {
+        const clean = entered.trim().slice(0, 20);
+        if (clean) {
+          this.updatePlayerName(clean);
+        }
+      }
+    });
 
     // Submit form (dùng chung cho cả solo và multi)
     this.elBtnSend?.addEventListener('click', () => this.handleGeneralSubmit());
@@ -117,7 +166,7 @@ export class WordChainGame {
       }
     });
 
-    // Nút chỉnh sửa tên hiển thị
+    // Nút chỉnh sửa tên hiển thị trên Header
     document.getElementById('btn-edit-name')?.addEventListener('click', () => {
       const current = this.player.name || 'Người Chơi';
       const entered = prompt('Nhập tên hiển thị mới của bạn (tối đa 20 ký tự):', current);
@@ -185,6 +234,76 @@ export class WordChainGame {
     // Gửi yêu cầu xin thông tin người chơi mới nhất
     if (window.parent !== window) {
       window.parent.postMessage({ type: 'ARCADE_REQUEST_PLAYER' }, '*');
+    }
+  }
+
+  syncPlayerProfileUI() {
+    const name = this.player.name || 'Người Chơi';
+    const avatar = this.player.avatar || '🐱';
+    if (this.elPlayerName) this.elPlayerName.textContent = name;
+    if (this.elPlayerAvatar) this.elPlayerAvatar.textContent = avatar;
+    if (this.modeSelectName) this.modeSelectName.textContent = name;
+    if (this.modeSelectAvatar) this.modeSelectAvatar.textContent = avatar;
+    const inputMpName = document.getElementById('input-mp-player-name');
+    if (inputMpName) inputMpName.value = name;
+  }
+
+  openModeSelectionModal(canClose = false) {
+    if (this.modeModal) {
+      this.modeModal.classList.add('active');
+    }
+    if (this.btnCloseModeModal) {
+      this.btnCloseModeModal.style.display = canClose ? 'inline-flex' : 'none';
+    }
+    this.syncPlayerProfileUI();
+
+    // Dừng timer nếu đang có ván chơi dở
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+  }
+
+  closeModeSelectionModal() {
+    if (this.modeModal) {
+      this.modeModal.classList.remove('active');
+    }
+  }
+
+  setupVirtualKeyboardHandler() {
+    if (!this.elInput) return;
+
+    const activateKeyboard = () => {
+      document.body.classList.add('keyboard-active');
+      window.scrollTo(0, 0);
+    };
+
+    const deactivateKeyboard = () => {
+      document.body.classList.remove('keyboard-active');
+      window.scrollTo(0, 0);
+    };
+
+    this.elInput.addEventListener('focus', activateKeyboard);
+    this.elInput.addEventListener('blur', deactivateKeyboard);
+
+    // Lắng nghe window.visualViewport trên trình duyệt điện thoại
+    if (window.visualViewport) {
+      const handleVisualResize = () => {
+        const vvHeight = window.visualViewport.height;
+        const screenH = window.innerHeight;
+        const isKeyboardOpen = (screenH - vvHeight) > 130;
+        document.body.classList.toggle('keyboard-active', isKeyboardOpen);
+        if (isKeyboardOpen) {
+          document.body.style.height = `${vvHeight}px`;
+          window.scrollTo(0, 0);
+        } else {
+          document.body.style.height = '';
+        }
+      };
+
+      window.visualViewport.addEventListener('resize', handleVisualResize);
+      window.visualViewport.addEventListener('scroll', () => {
+        window.scrollTo(0, 0);
+      });
     }
   }
 
@@ -329,7 +448,7 @@ export class WordChainGame {
       this.mpEntryModal?.classList.remove('active');
       this.mpManager.resetEntryButtons();
       if (!this.mpManager.currentRoom) {
-        this.switchMode('solo');
+        this.openModeSelectionModal(false);
       }
     });
 
@@ -418,9 +537,7 @@ export class WordChainGame {
     } catch (e) {
       console.warn(e);
     }
-    if (this.elPlayerName) this.elPlayerName.textContent = clean;
-    const inputMpName = document.getElementById('input-mp-player-name');
-    if (inputMpName) inputMpName.value = clean;
+    this.syncPlayerProfileUI();
 
     this.mpManager.updatePlayerName(clean);
     if (this.mode === 'solo') {
@@ -431,13 +548,13 @@ export class WordChainGame {
   /**
    * Chuyển đổi giữa chế độ Solo và Đấu Nhóm
    */
-  switchMode(targetMode) {
-    if (this.mode === targetMode) return;
+  switchMode(targetMode, force = true) {
+    if (!force && this.mode === targetMode) return;
     this.mode = targetMode;
 
     if (this.mode === 'solo') {
-      this.tabSolo?.classList.add('active');
-      this.tabMulti?.classList.remove('active');
+      if (this.currentModeLabel) this.currentModeLabel.textContent = 'Bot 🤖';
+      if (this.elBtnSoloTime) this.elBtnSoloTime.style.display = 'inline-flex';
       if (this.elBtnGiveUp) this.elBtnGiveUp.style.display = 'none';
 
       // Xóa turn tracker nếu có
@@ -449,12 +566,12 @@ export class WordChainGame {
 
       if (this.elModal) this.elModal.classList.remove('active');
 
-      // Khởi động lại ván chơi đơn với bot
+      // Khởi động ván chơi đơn với bot
       this.startNewGame();
     } else {
       // Đấu Nhóm
-      this.tabMulti?.classList.add('active');
-      this.tabSolo?.classList.remove('active');
+      if (this.currentModeLabel) this.currentModeLabel.textContent = 'Nhóm 👥';
+      if (this.elBtnSoloTime) this.elBtnSoloTime.style.display = 'none';
       if (this.elBtnGiveUp) this.elBtnGiveUp.style.display = 'inline-block';
 
       // Dừng vòng lặp timer chơi đơn
@@ -693,7 +810,7 @@ export class WordChainGame {
     }
 
     if (this.elHintText) {
-      this.elHintText.innerHTML = `👉 Tiếng bắt đầu: <strong class="highlight-syllable">${targetFirstSyllable}</strong> • Bạn chỉ cần gõ tiếng thứ 2!`;
+      this.elHintText.innerHTML = `👉 Từ trước: <span class="highlight-syllable">"${this.currentWord}"</span> • Nối tiếp tiếng: <strong class="highlight-syllable">${targetFirstSyllable}</strong>`;
     }
 
     if (this.elInput) {
@@ -1098,7 +1215,16 @@ export class WordChainGame {
 // Khởi chạy khi DOM sẵn sàng
 function bootGame() {
   const game = new WordChainGame();
-  game.startNewGame();
+
+  // Kiểm tra nếu có mã room trên URL query thì tự động vào multi
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('room')) {
+    game.closeModeSelectionModal();
+    game.switchMode('multi');
+  } else {
+    // Mặc định hiển thị Màn hình chọn chế độ chơi: Bot hay Nhóm
+    game.openModeSelectionModal(false);
+  }
 }
 
 if (document.readyState === 'loading') {

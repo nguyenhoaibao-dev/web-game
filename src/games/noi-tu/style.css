@@ -156,37 +156,22 @@ body {
   gap: 6px;
 }
 
-/* Mode Switcher Tabs */
-.mode-switcher-bar {
-  display: flex;
-  padding: 4px 14px 6px;
-  gap: 8px;
-}
-
-.mode-tab-btn {
-  flex: 1;
-  padding: 6px 12px;
-  background-color: var(--bg-game);
-  border: 1px solid var(--border-c);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.mode-tab-btn:hover {
+.btn-mode-toggle {
   background-color: var(--primary-light);
+  border: 1px solid var(--primary-border);
   color: var(--primary-dark);
+  font-weight: 700;
 }
 
-.mode-tab-btn.active {
-  background-color: var(--primary);
+.btn-mode-toggle:hover {
+  background-color: #dcfce7;
   border-color: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.25);
+}
+
+/* Đã bỏ 2 dòng trên bàn đấu: ẩn hoàn toàn nếu còn sót */
+.mode-switcher-bar,
+.table-meta-bar {
+  display: none !important;
 }
 
 /* Header Timer Bar */
@@ -205,50 +190,196 @@ body {
 }
 
 /* ============================================================
-   2. BÀN THI ĐẤU (TABLE ARENA CONTAINER)
+   0. MODAL CHỌN CHẾ ĐỘ CHƠI BAN ĐẦU (MODE SELECTION)
+   ============================================================ */
+.mode-select-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: #ffffff;
+  border: 1.5px solid var(--border-c);
+  border-radius: 20px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleUp {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.mode-select-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  gap: 4px;
+}
+
+.mode-brand-badge {
+  width: 48px;
+  height: 48px;
+  background-color: var(--primary-light);
+  border: 1.5px solid var(--primary-border);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+}
+
+.mode-main-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -0.3px;
+}
+
+.mode-main-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.mode-close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+}
+
+/* Player Mini Badge trong Modal */
+.mode-player-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-game);
+  border: 1px solid var(--border-c);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.mode-player-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mode-player-avatar {
+  font-size: 1.3rem;
+  width: 32px;
+  height: 32px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-c);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-player-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+/* Grid 2 Thẻ Chọn Chế Độ */
+.mode-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mode-card {
+  background-color: #ffffff;
+  border: 1.5px solid var(--border-c);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mode-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.1);
+}
+
+.mode-card#card-mode-bot:hover {
+  border-color: var(--primary);
+}
+
+.mode-card#card-mode-multi:hover {
+  border-color: #0284c7;
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.1);
+}
+
+.mode-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mode-card-icon {
+  font-size: 1.8rem;
+  width: 44px;
+  height: 44px;
+  background-color: var(--bg-game);
+  border: 1px solid var(--border-c);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mode-card-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.mode-card-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.mode-action-btn {
+  width: 100%;
+  padding: 9px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: 10px;
+}
+
+/* ============================================================
+   2. BÀN THI ĐẤU (TABLE ARENA CONTAINER) - COMPACT
    ============================================================ */
 .table-arena-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 10px 14px;
+  padding: 6px 10px;
   overflow: hidden;
-  gap: 10px;
+  gap: 4px;
   background-color: var(--bg-game);
-}
-
-/* Thanh tóm tắt thông tin bàn đấu */
-.table-meta-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #ffffff;
-  border: 1px solid var(--border-c);
-  border-radius: 10px;
-  padding: 6px 12px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.meta-players {
-  color: var(--text-dark);
-  font-weight: 700;
-}
-
-.status-indicator-dot {
-  width: 7px;
-  height: 7px;
-  background-color: var(--primary);
-  border-radius: 50%;
-  display: inline-block;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  min-height: 0;
 }
 
 /* Khung bàn chơi */
@@ -263,38 +394,38 @@ body {
 .game-table {
   width: 100%;
   height: 100%;
-  max-width: 450px;
+  max-width: 420px;
   background: radial-gradient(circle at center, #f0fdf4 0%, #ecfdf5 70%, #dcfce7 100%);
   border: 1.5px solid var(--primary-border);
-  border-radius: 24px;
+  border-radius: 18px;
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 6px 8px;
   position: relative;
   overflow: hidden;
 }
 
 /* ============================================================
-   3. CÁC GHẾ NGỒI QUANH BÀN (TABLE SEATS)
+   3. CÁC GHẾ NGỒI QUANH BÀN (TABLE SEATS) - COMPACT
    ============================================================ */
 .table-seats-row {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   width: 100%;
-  min-height: 60px;
+  min-height: 44px;
   z-index: 5;
 }
 
 .top-seats {
-  padding-bottom: 2px;
+  padding-bottom: 1px;
 }
 
 .bottom-seats {
-  padding-top: 2px;
+  padding-top: 1px;
 }
 
 /* Hàng giữa bàn: Cánh trái (9h) - Tâm bàn - Cánh phải (3h) */
@@ -305,7 +436,7 @@ body {
   width: 100%;
   flex: 1;
   min-height: 0;
-  gap: 6px;
+  gap: 4px;
   position: relative;
 }
 
@@ -314,9 +445,9 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 6px;
-  min-width: 68px;
-  max-width: 82px;
+  gap: 4px;
+  min-width: 58px;
+  max-width: 72px;
   z-index: 5;
 }
 
@@ -331,13 +462,13 @@ body {
 .player-seat {
   background-color: #ffffff;
   border: 1px solid var(--border-c);
-  border-radius: 12px;
-  padding: 6px 10px;
+  border-radius: 10px;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 110px;
-  max-width: 160px;
+  gap: 6px;
+  min-width: 95px;
+  max-width: 140px;
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
   position: relative;
@@ -346,11 +477,11 @@ body {
 /* Ghế ở 2 bên cánh (9h và 3h): hiển thị dọc tinh tế */
 .player-seat.side-seat {
   flex-direction: column;
-  padding: 6px 4px;
-  min-width: 64px;
-  max-width: 78px;
+  padding: 4px 3px;
+  min-width: 56px;
+  max-width: 68px;
   text-align: center;
-  gap: 3px;
+  gap: 2px;
 }
 
 .player-seat.side-seat .seat-meta {
@@ -359,19 +490,19 @@ body {
 }
 
 .player-seat.side-seat .seat-name {
-  max-width: 62px;
-  font-size: 0.72rem;
+  max-width: 54px;
+  font-size: 0.68rem;
 }
 
 .player-seat.side-seat .seat-stat {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
 }
 
 /* Ghế Hướng 6h (Vị trí mặc định của Bạn): nổi bật và cân đối */
 .bottom-seats .player-seat.is-me {
-  min-width: 170px;
-  max-width: 240px;
-  padding: 7px 14px;
+  min-width: 130px;
+  max-width: 190px;
+  padding: 4px 10px;
   background-color: #ffffff;
   border: 1.5px solid var(--primary-border);
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
@@ -656,25 +787,25 @@ body {
 }
 
 .seat-avatar {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   background-color: var(--primary-light);
   border: 1px solid var(--primary-border);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 0.95rem;
 }
 
 .seat-turn-dot {
   position: absolute;
   bottom: -2px;
   right: -2px;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   background-color: var(--primary);
-  border: 2px solid #ffffff;
+  border: 1.5px solid #ffffff;
   border-radius: 50%;
 }
 
@@ -683,17 +814,17 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .seat-name-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .seat-name {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-dark);
   white-space: nowrap;
@@ -702,12 +833,12 @@ body {
 }
 
 .seat-host-badge {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: #d97706;
 }
 
 .seat-stat {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   font-weight: 500;
   margin-top: 1px;
@@ -715,11 +846,11 @@ body {
 
 .seat-status-badge {
   display: inline-block;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: 4px;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .seat-status-turn {
@@ -735,7 +866,7 @@ body {
 }
 
 /* ============================================================
-   4. TÂM BÀN THI ĐẤU (TABLE CENTER FELT)
+   4. TÂM BÀN THI ĐẤU (TABLE CENTER FELT) - COMPACT
    ============================================================ */
 .table-center-felt {
   flex: 1;
@@ -743,10 +874,11 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 5px;
+  padding: 4px 8px;
   position: relative;
   z-index: 2;
+  min-height: 0;
 }
 
 /* Đồng hồ số tròn ở tâm bàn */
@@ -757,8 +889,8 @@ body {
 }
 
 .center-timer-circle {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: #ffffff;
   border: 1.5px solid var(--primary);
@@ -766,54 +898,58 @@ body {
   align-items: center;
   justify-content: center;
   gap: 1px;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.12);
   transition: border-color 0.2s, color 0.2s;
 }
 
 .center-timer-val {
   font-family: inherit;
-  font-size: 1.15rem;
+  font-size: 0.92rem;
   font-weight: 800;
   color: var(--primary-dark);
 }
 
 .center-timer-unit {
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   font-weight: 600;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
-/* Thẻ từ hiện tại to và nổi bật ở tâm bàn */
+/* Thẻ từ hiện tại to và nổi bật ở tâm bàn - THU GỌN VỪA VẶN */
 .center-word-spotlight {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   width: 100%;
 }
 
 .word-spotlight-label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 .center-word-card {
   background-color: #ffffff;
-  border: 1px solid var(--primary-border);
-  border-radius: 14px;
-  padding: 8px 24px;
-  font-size: 1.5rem;
+  border: 1.5px solid var(--primary-border);
+  border-radius: 10px;
+  padding: 5px 16px;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--primary-dark);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
   text-transform: capitalize;
   text-align: center;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   animation: fadeIn 0.2s ease-out;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Thẻ chỉ báo tiếng tiếp theo */
@@ -1219,4 +1355,237 @@ body {
   background-color: rgba(255, 255, 255, 0.5);
   box-shadow: none;
 }
+
+/* ============================================================
+   7. CÁC NÚT BẤM TIỆN ÍCH (NEUMORPHIC BUTTONS)
+   ============================================================ */
+.btn-neu {
+  padding: 8px 14px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-c);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-neu:hover {
+  border-color: var(--primary-border);
+  background-color: var(--primary-light);
+}
+
+.btn-neu:active {
+  transform: scale(0.98);
+}
+
+.btn-neu.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.btn-neu.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-neu.btn-accent {
+  background-color: #0284c7;
+  border-color: #0284c7;
+  color: #ffffff;
+}
+
+.btn-neu.btn-accent:hover {
+  background-color: #0369a1;
+}
+
+.btn-neu.btn-sm {
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  border-radius: 6px;
+}
+
+/* ============================================================
+   8. TỐI ƯU HÓA MOBILE & BÀN PHÍM ẢO (VIRTUAL KEYBOARD RESPONSIVE)
+   Giải quyết triệt để vấn đề: Bàn phím đẩy bàn game hoặc che mất từ
+   ============================================================ */
+@media (max-width: 600px), (max-height: 680px) {
+  .game-header {
+    padding: 0;
+  }
+  .header-bar {
+    padding: 6px 10px;
+  }
+  .btn-icon-neu {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+  .btn-time-neu {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+  .user-score-box {
+    padding: 3px 8px;
+    gap: 5px;
+  }
+  .player-name-label {
+    max-width: 75px;
+    font-size: 0.75rem;
+  }
+  .table-arena-container {
+    padding: 4px 8px;
+    gap: 3px;
+  }
+  .game-table {
+    padding: 4px 6px;
+    border-radius: 14px;
+  }
+  .table-seats-row {
+    min-height: 38px;
+  }
+  .player-seat {
+    padding: 3px 6px;
+    min-width: 80px;
+    gap: 4px;
+  }
+  .bottom-seats .player-seat.is-me {
+    min-width: 110px;
+    max-width: 160px;
+    padding: 3px 8px;
+  }
+  .seat-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 0.85rem;
+  }
+  .seat-name {
+    font-size: 0.65rem;
+  }
+  .center-word-card {
+    font-size: 1.05rem;
+    padding: 4px 12px;
+  }
+  .center-timer-circle {
+    width: 28px;
+    height: 28px;
+  }
+  .center-timer-val {
+    font-size: 0.85rem;
+  }
+  .game-input-container {
+    padding: 6px 10px 8px;
+    gap: 4px;
+  }
+  .input-prefix-badge {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+  .word-input {
+    padding: 7px 10px;
+    font-size: 0.88rem;
+  }
+  .btn-send-word {
+    padding: 7px 12px;
+    font-size: 0.82rem;
+  }
+}
+
+/* KHI BÀN PHÍM ẢO MỞ TRÊN ĐIỆN THOẠI (body.keyboard-active) */
+body.keyboard-active {
+  overflow: hidden !important;
+}
+
+body.keyboard-active .game-header {
+  border-bottom-width: 1px;
+}
+
+body.keyboard-active .btn-solo-time,
+body.keyboard-active #btn-sound-toggle {
+  display: none !important;
+}
+
+body.keyboard-active .table-arena-container {
+  padding: 2px 6px !important;
+  gap: 2px !important;
+}
+
+body.keyboard-active .game-table {
+  padding: 3px 6px !important;
+  border-radius: 10px !important;
+}
+
+/* Ẩn bớt 2 cánh và chuỗi từ dài để nhường diện tích cho tâm bàn */
+body.keyboard-active .table-side-seat {
+  display: none !important;
+}
+
+body.keyboard-active .recent-chain-flow {
+  display: none !important;
+}
+
+body.keyboard-active .table-seats-row {
+  min-height: 28px !important;
+}
+
+body.keyboard-active .player-seat {
+  padding: 2px 6px !important;
+  min-width: 60px !important;
+}
+
+body.keyboard-active .seat-win-badge,
+body.keyboard-active .seat-status-badge {
+  display: none !important;
+}
+
+body.keyboard-active .table-center-felt {
+  gap: 2px !important;
+  padding: 2px !important;
+}
+
+body.keyboard-active .center-timer-circle {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+body.keyboard-active .center-timer-val {
+  font-size: 0.75rem !important;
+}
+
+body.keyboard-active .center-timer-unit {
+  display: none !important;
+}
+
+body.keyboard-active .word-spotlight-label {
+  display: none !important;
+}
+
+body.keyboard-active .center-word-card {
+  font-size: 0.98rem !important;
+  padding: 3px 10px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+}
+
+body.keyboard-active .center-target-box {
+  padding: 1px 6px !important;
+  font-size: 0.68rem !important;
+}
+
+body.keyboard-active .game-input-container {
+  padding: 4px 8px 6px !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.keyboard-active .target-hint-box {
+  font-size: 0.72rem !important;
+  min-height: 16px !important;
+}
+
 

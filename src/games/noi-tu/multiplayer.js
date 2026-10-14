@@ -819,7 +819,7 @@ export class MultiplayerManager {
         input.placeholder = `Bạn đang là khán giả... Đang chờ ${currentPlayerName}`;
       }
       if (sendBtn) sendBtn.disabled = true;
-      if (hintText) hintText.innerHTML = `🍿 Khán giả: Đang chờ <strong>${currentPlayerName}</strong> nối tiếp từ "<strong>${this.targetSyllable}</strong>"`;
+      if (hintText) hintText.innerHTML = `🍿 Khán giả: Từ trước: "<strong>${this.currentWord}</strong>" ➔ Đang chờ <strong>${currentPlayerName}</strong> nối tiếng "<strong>${this.targetSyllable}</strong>"`;
       return;
     }
 
@@ -836,7 +836,7 @@ export class MultiplayerManager {
       }
       if (sendBtn) sendBtn.disabled = false;
       if (hintText) {
-        hintText.innerHTML = `👉 <strong>ĐẾN LƯỢT BẠN!</strong> Tiếng bắt đầu: <strong class="highlight-syllable">${this.targetSyllable}</strong> • Bạn chỉ cần gõ tiếng thứ 2!`;
+        hintText.innerHTML = `👉 Từ trước: <span class="highlight-syllable">"${this.currentWord}"</span> • Nối tiếp tiếng: <strong class="highlight-syllable">${this.targetSyllable}</strong>`;
       }
       sounds.playPop();
     } else {
@@ -851,7 +851,7 @@ export class MultiplayerManager {
       }
       if (sendBtn) sendBtn.disabled = true;
       if (hintText) {
-        hintText.innerHTML = `⏳ Đang chờ <strong>${currentPlayerName}</strong> nối từ bắt đầu bằng "<strong>${this.targetSyllable}</strong>"`;
+        hintText.innerHTML = `⏳ Từ trước: "<strong>${this.currentWord}</strong>" ➔ Đang chờ <strong>${currentPlayerName}</strong> nối tiếng "<strong>${this.targetSyllable}</strong>"`;
       }
     }
   }
