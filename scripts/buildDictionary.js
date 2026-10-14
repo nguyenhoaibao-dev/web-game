@@ -15,7 +15,29 @@ async function build() {
   const blacklist = new Set([
     'a posteriori', 'a priori', 'ad hoc',
     'acid acetic', 'acid amin', 'acid béo', 'acid carbonic', 'acid chlorhydric', 'acid nitric', 'acid sulfuric',
-    'ampe kế', 'ampere kế'
+    'ampe kế', 'ampere kế',
+    // Lỗi gõ phím & sai chính tả
+    'ăn cướì', 'bàn gìặt', 'âởu triệu', 'tự quuyết', 'a rooi',
+    'hũu sản', 'vòmg cung', 'lò kò', 'ngắm ngía', 'ngoằn ngèo',
+    'áo tơì', 'ngư tiêù',
+    // Ký tự Latinh rời
+    'bên b', 'bom h', 'x quang',
+    // Hư từ cắt vụn từ câu văn NLP
+    'cho đang', 'cho được', 'cho là', 'đang thì', 'đã là', 'là hơi',
+    'chẳng là', 'những là', 'thì chớ', 'ạ ơi', 'cũng cứ', 'chẳng cứ',
+    // Từ mượn tiếng Anh / ngoại lai
+    'axit sunfuric', 'code web', 'mã code', 'quần jean', 'sofa da',
+    'trang web', 'web game', 'game bài', 'check in', 'đường link',
+    'xe bus', 'video clip', 'băng video', 'sóng radio', 'kệ tivi',
+    'đậu cove', 'khí oxy', 'bạc bromua', 'axit amin', 'axit axetic',
+    'axit cacbonic', 'axit clohiđric', 'axit nitric', 'áo vest', 'to patch',
+    // Từ thô tục, chửi thề, bài tiết khiếm nhã
+    'cặc bò', 'cặc heo', 'chó đái', 'vịt đái', 'cứt đái', 'con đĩ', 'đồ đĩ',
+    'đĩ già', 'đĩ đực', 'đĩ miệng', 'đĩ mốc', 'đĩ rạc', 'đĩ bợm', 'đĩ điếm',
+    'đĩ thoả', 'đĩ thõa', 'đĩ tính', 'đĩ trai', 'động đĩ', 'gái đĩ', 'làm đĩ',
+    'bố đĩ', 'bợm đĩ', 'lồn lột', 'ỉa bậy', 'ỉa đái', 'ỉa són', 'ỉa tháo', 'ỉa vào',
+    // Địa danh dân tộc thiểu số âm lạ
+    'a mrơn', 'ayun pa'
   ]);
 
   const wordSet = new Set();

@@ -333,41 +333,66 @@ export class WordChainGame {
   }
 
   setupVirtualKeyboardHandler() {
-    if (!this.elInput) return;
+    const lockScroll = () => {
+      window.scrollTo(0, 0);
+      if (document.body) document.body.scrollTop = 0;
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+    };
 
     const activateKeyboard = () => {
       document.body.classList.add('keyboard-active');
-      window.scrollTo(0, 0);
+      lockScroll();
+      [40, 120, 250, 450].forEach(delay => setTimeout(lockScroll, delay));
     };
 
     const deactivateKeyboard = () => {
-      document.body.classList.remove('keyboard-active');
-      window.scrollTo(0, 0);
+      setTimeout(() => {
+        const isStillInput = document.activeElement === this.elInput || document.activeElement === this.chatTextInput;
+        if (!isStillInput) {
+          document.body.classList.remove('keyboard-active');
+          document.body.style.height = '';
+          lockScroll();
+        }
+      }, 100);
     };
 
-    this.elInput.addEventListener('focus', activateKeyboard);
-    this.elInput.addEventListener('blur', deactivateKeyboard);
+    if (this.elInput) {
+      this.elInput.addEventListener('focus', activateKeyboard);
+      this.elInput.addEventListener('blur', deactivateKeyboard);
+    }
+
+    if (this.chatTextInput) {
+      this.chatTextInput.addEventListener('focus', activateKeyboard);
+      this.chatTextInput.addEventListener('blur', deactivateKeyboard);
+    }
 
     // Lắng nghe window.visualViewport trên trình duyệt điện thoại
     if (window.visualViewport) {
       const handleVisualResize = () => {
         const vvHeight = window.visualViewport.height;
-        const screenH = window.innerHeight;
-        const isKeyboardOpen = (screenH - vvHeight) > 130;
+        const screenH = window.screen.height || window.innerHeight;
+        const isHeightShrunk = vvHeight < (screenH * 0.8);
+        const isInputFocused = document.activeElement === this.elInput || document.activeElement === this.chatTextInput;
+        const isKeyboardOpen = isHeightShrunk || isInputFocused;
+
         document.body.classList.toggle('keyboard-active', isKeyboardOpen);
         if (isKeyboardOpen) {
           document.body.style.height = `${vvHeight}px`;
-          window.scrollTo(0, 0);
+          lockScroll();
         } else {
           document.body.style.height = '';
         }
       };
 
       window.visualViewport.addEventListener('resize', handleVisualResize);
-      window.visualViewport.addEventListener('scroll', () => {
-        window.scrollTo(0, 0);
-      });
+      window.visualViewport.addEventListener('scroll', lockScroll);
     }
+
+    window.addEventListener('scroll', () => {
+      if (document.body.classList.contains('keyboard-active')) {
+        lockScroll();
+      }
+    }, { passive: true });
   }
 
   /**
