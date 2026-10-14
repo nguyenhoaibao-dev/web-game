@@ -139,7 +139,11 @@ export class MultiplayerManager {
 
   closeEntryModalAndResetButtons() {
     this.resetEntryButtons();
-    document.getElementById('mp-entry-modal')?.classList.remove('active');
+    const entryModal = document.getElementById('mp-entry-modal');
+    if (entryModal) {
+      entryModal.classList.remove('active');
+      entryModal.style.display = 'none';
+    }
   }
 
   createRoom(turnTimeLimit = 12) {
@@ -252,15 +256,26 @@ export class MultiplayerManager {
   }
 
   closeAllModals() {
-    document.getElementById('game-over-modal')?.classList.remove('active');
-    document.getElementById('mp-game-over-modal')?.classList.remove('active');
-    document.getElementById('mp-room-modal')?.classList.remove('active');
-    document.getElementById('mp-entry-modal')?.classList.remove('active');
+    ['game-over-modal', 'mp-game-over-modal', 'mp-room-modal', 'mp-entry-modal', 'mode-select-modal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('active');
+        el.style.display = 'none';
+      }
+    });
   }
 
   closeMatchOverModal() {
-    document.getElementById('mp-game-over-modal')?.classList.remove('active');
-    document.getElementById('game-over-modal')?.classList.remove('active');
+    const mpOver = document.getElementById('mp-game-over-modal');
+    if (mpOver) {
+      mpOver.classList.remove('active');
+      mpOver.style.display = 'none';
+    }
+    const soloOver = document.getElementById('game-over-modal');
+    if (soloOver) {
+      soloOver.classList.remove('active');
+      soloOver.style.display = 'none';
+    }
   }
 
   /**
@@ -411,6 +426,8 @@ export class MultiplayerManager {
     const overlay = document.getElementById('mp-room-modal');
     if (!overlay) return;
 
+    overlay.style.display = 'flex';
+    void overlay.offsetWidth;
     overlay.classList.add('active');
     overlay.innerHTML = `
       <div class="mp-modal-card">
@@ -495,6 +512,7 @@ export class MultiplayerManager {
     // Thu nhỏ modal để xem bàn
     document.getElementById('btn-minimize-lobby')?.addEventListener('click', () => {
       overlay.classList.remove('active');
+      overlay.style.display = 'none';
       this.showToast('Bấm vào ô Mã PIN ở tâm bàn để mở lại phòng chờ!');
     });
 

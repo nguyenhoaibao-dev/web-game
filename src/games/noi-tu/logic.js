@@ -133,17 +133,35 @@ export class WordChainGame {
       }
     });
 
-    // Nút chọn Chơi Với Bot
-    this.btnChooseBot?.addEventListener('click', () => {
+    // Xử lý chọn chế độ (Hỗ trợ chạm vào cả thẻ card hoặc nút con trên Mobile)
+    const cardModeBot = document.getElementById('card-mode-bot');
+    const cardModeMulti = document.getElementById('card-mode-multi');
+
+    const handleSelectSolo = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      sounds.playPop();
       this.closeModeSelectionModal();
       this.switchMode('solo');
-    });
+    };
 
-    // Nút chọn Bàn Đấu Nhóm
-    this.btnChooseMulti?.addEventListener('click', () => {
+    const handleSelectMulti = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      sounds.playPop();
       this.closeModeSelectionModal();
       this.switchMode('multi');
-    });
+    };
+
+    this.btnChooseBot?.addEventListener('click', handleSelectSolo);
+    cardModeBot?.addEventListener('click', handleSelectSolo);
+
+    this.btnChooseMulti?.addEventListener('click', handleSelectMulti);
+    cardModeMulti?.addEventListener('click', handleSelectMulti);
 
     // Nút đổi tên trong modal chọn chế độ
     this.btnModeEditName?.addEventListener('click', () => {
@@ -292,6 +310,8 @@ export class WordChainGame {
 
   openModeSelectionModal(canClose = false) {
     if (this.modeModal) {
+      this.modeModal.style.display = 'flex';
+      void this.modeModal.offsetWidth;
       this.modeModal.classList.add('active');
     }
     if (this.btnCloseModeModal) {
@@ -308,6 +328,7 @@ export class WordChainGame {
   closeModeSelectionModal() {
     if (this.modeModal) {
       this.modeModal.classList.remove('active');
+      this.modeModal.style.display = 'none';
     }
   }
 
@@ -668,10 +689,20 @@ export class WordChainGame {
       const tracker = document.getElementById('mp-turn-tracker');
       if (tracker) tracker.remove();
 
-      this.mpEntryModal?.classList.remove('active');
-      document.getElementById('mp-room-modal')?.classList.remove('active');
+      if (this.mpEntryModal) {
+        this.mpEntryModal.classList.remove('active');
+        this.mpEntryModal.style.display = 'none';
+      }
+      const roomModal = document.getElementById('mp-room-modal');
+      if (roomModal) {
+        roomModal.classList.remove('active');
+        roomModal.style.display = 'none';
+      }
 
-      if (this.elModal) this.elModal.classList.remove('active');
+      if (this.elModal) {
+        this.elModal.classList.remove('active');
+        this.elModal.style.display = 'none';
+      }
 
       // Khởi động ván chơi đơn với bot
       this.startNewGame();
@@ -684,12 +715,19 @@ export class WordChainGame {
       // Dừng vòng lặp timer chơi đơn
       clearInterval(this.timerInterval);
 
-      if (this.elModal) this.elModal.classList.remove('active');
+      if (this.elModal) {
+        this.elModal.classList.remove('active');
+        this.elModal.style.display = 'none';
+      }
 
       // Nếu chưa vào phòng nào, thiết lập bàn chờ và mở modal tạo / vào phòng
       if (!this.mpManager.currentRoom) {
         this.resetTableForMultiplayer();
-        this.mpEntryModal?.classList.add('active');
+        if (this.mpEntryModal) {
+          this.mpEntryModal.style.display = 'flex';
+          void this.mpEntryModal.offsetWidth;
+          this.mpEntryModal.classList.add('active');
+        }
         this.mpManager.connect();
       } else {
         if (this.mpManager.currentRoom.state === 'LOBBY') {
