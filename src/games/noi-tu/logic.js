@@ -53,6 +53,8 @@ export class WordChainGame {
     this.elFinalRecord = document.getElementById('final-record');
     this.elBtnRestart = document.getElementById('btn-restart');
     this.elBtnExit = document.getElementById('btn-exit');
+    this.elPrefixWord = document.getElementById('prefix-word-text');
+    this.elPrefixBadge = document.getElementById('input-prefix-badge');
 
     // Table Arena elements
     this.elTableTopSeats = document.getElementById('table-top-seats');
@@ -361,6 +363,12 @@ export class WordChainGame {
       this.elMetaStatusText.style.cursor = 'default';
     }
     if (this.elMetaChainText) this.elMetaChainText.textContent = '0 từ';
+
+    if (this.elPrefixWord) this.elPrefixWord.textContent = '---';
+    if (this.elPrefixBadge) {
+      this.elPrefixBadge.classList.remove('active-turn');
+      this.elPrefixBadge.classList.add('disabled');
+    }
 
     if (this.elInput) {
       this.elInput.disabled = true;
@@ -676,14 +684,22 @@ export class WordChainGame {
     const parts = dictionary.splitWords(this.currentWord);
     const targetFirstSyllable = parts ? parts.last : '';
 
+    if (this.elPrefixWord) {
+      this.elPrefixWord.textContent = targetFirstSyllable || '---';
+    }
+    if (this.elPrefixBadge) {
+      this.elPrefixBadge.classList.add('active-turn');
+      this.elPrefixBadge.classList.remove('disabled');
+    }
+
     if (this.elHintText) {
-      this.elHintText.innerHTML = `Nối từ bắt đầu bằng tiếng: <strong class="highlight-syllable">${targetFirstSyllable}</strong>`;
+      this.elHintText.innerHTML = `👉 Tiếng bắt đầu: <strong class="highlight-syllable">${targetFirstSyllable}</strong> • Bạn chỉ cần gõ tiếng thứ 2!`;
     }
 
     if (this.elInput) {
       this.elInput.disabled = false;
       this.elInput.value = '';
-      this.elInput.placeholder = `Ví dụ: ${targetFirstSyllable} ...`;
+      this.elInput.placeholder = `Nhập tiếng nối tiếp sau "${targetFirstSyllable}"...`;
       this.elInput.focus();
     }
 
@@ -803,41 +819,36 @@ export class WordChainGame {
 
     const rawInput = (this.elInput?.value || '').trim();
     if (!rawInput) {
-      this.showSoloSeatBubble('user', '---', 'wrong', 'Chưa nhập từ nào');
-      this.showInputError('Bạn chưa nhập từ nào!');
+      this.showSoloSeatBubble('user', '---', 'wrong', 'Chưa nhập tiếng nối');
+      this.showInputError('Bạn chưa nhập tiếng nối tiếp nào!');
       return;
     }
 
-    let cleanInput = dictionary.normalize(rawInput);
     const lastWordParts = dictionary.splitWords(this.currentWord);
     const expectedFirstSyllable = lastWordParts ? lastWordParts.last : '';
 
-    // Hỗ trợ thông minh: Nếu người chơi chỉ nhập 1 tiếng nối tiếp (ví dụ chỉ gõ "sát" khi tiếng cần nối là "quan"),
-    // hệ thống tự động ghép thành "quan sát"
-    if (dictionary.countSyllables(cleanInput) === 1 && expectedFirstSyllable) {
-      cleanInput = `${expectedFirstSyllable} ${cleanInput}`;
-    }
+    const cleanInput = dictionary.normalize(rawInput);
+    const parts = cleanInput.split(' ').filter(Boolean);
 
-    // 1. Kiểm tra số tiếng
-    if (dictionary.countSyllables(cleanInput) !== 2) {
-      this.showSoloSeatBubble('user', rawInput, 'wrong', 'Phải có 2 tiếng');
-      this.showInputError('Từ phải có chính xác 2 tiếng!');
+    // Kiểm tra nếu người dùng gõ 2 tiếng mà tiếng đầu không khớp
+    if (parts.length === 2 && !dictionary.syllablesMatch(parts[0], expectedFirstSyllable)) {
+      this.showSoloSeatBubble('user', rawInput, 'wrong', `Chỉ gõ tiếng sau "${expectedFirstSyllable}"`);
+      this.showInputError(`Chỉ cần nhập 1 tiếng nối tiếp sau "${expectedFirstSyllable}" (ví dụ: sát)!`);
       return;
     }
 
-    // 2. Nhận diện từ trong từ điển (gắn chặt với expectedFirstSyllable để không bao giờ bị lệch dấu)
-    const matchedWord = dictionary.resolveWord(cleanInput, expectedFirstSyllable);
+    if (parts.length > 2) {
+      this.showSoloSeatBubble('user', rawInput, 'wrong', 'Chỉ nhập 1 tiếng');
+      this.showInputError(`Vui lòng chỉ nhập 1 tiếng nối tiếp sau "${expectedFirstSyllable}"!`);
+      return;
+    }
+
+    // Tự động nhận diện và ghép tiếng nối tiếp
+    const matchedWord = dictionary.resolveContinuation(rawInput, expectedFirstSyllable);
     if (!matchedWord) {
-      this.showSoloSeatBubble('user', rawInput, 'wrong', 'Không có trong từ điển');
-      this.showInputError(`Từ "${cleanInput}" chưa có trong từ điển tiếng Việt!`);
-      return;
-    }
-
-    // 3. Kiểm tra tiếng đầu tiên trùng tiếng cuối của từ trước (chính xác cả dấu)
-    const inputParts = dictionary.splitWords(matchedWord);
-    if (!inputParts || !dictionary.syllablesMatch(inputParts.first, expectedFirstSyllable)) {
-      this.showSoloSeatBubble('user', rawInput, 'wrong', `Phải bắt đầu bằng "${expectedFirstSyllable}"`);
-      this.showInputError(`Tiếng đầu tiên phải là "${expectedFirstSyllable}"! Bạn đang nhập "${inputParts ? inputParts.first : ''}"`);
+      const attempted = parts.length === 1 ? `${expectedFirstSyllable} ${parts[0]}` : cleanInput;
+      this.showSoloSeatBubble('user', attempted, 'wrong', 'Không có trong từ điển');
+      this.showInputError(`Từ "${attempted}" chưa có trong từ điển tiếng Việt!`);
       return;
     }
 
@@ -873,9 +884,23 @@ export class WordChainGame {
     this.updateTableCenter(matchedWord, this.player.name || 'Bạn', `+${roundScore}đ`);
     this.renderSoloSeats('bot');
 
+    if (this.elPrefixBadge) {
+      this.elPrefixBadge.classList.remove('active-turn');
+      this.elPrefixBadge.classList.add('disabled');
+    }
+
     if (this.elInput) {
       this.elInput.disabled = true;
       this.elInput.value = '';
+      this.elInput.placeholder = '⏳ Đang chờ Bot nối từ...';
+    }
+
+    if (this.elPrefixBadge) {
+      this.elPrefixBadge.classList.remove('active-turn');
+      this.elPrefixBadge.classList.add('disabled');
+    }
+    if (this.elPrefixWord) {
+      this.elPrefixWord.textContent = '...';
     }
 
     // Chuyển lượt cho Máy
@@ -1017,6 +1042,14 @@ export class WordChainGame {
     }
 
     this.renderSoloSeats();
+
+    if (this.elInput) {
+      this.elInput.disabled = true;
+    }
+    if (this.elPrefixBadge) {
+      this.elPrefixBadge.classList.remove('active-turn');
+      this.elPrefixBadge.classList.add('disabled');
+    }
 
     // Gửi điểm số ra Portal chính
     if (window.parent !== window) {

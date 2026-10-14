@@ -1,83 +1,28 @@
-import { RAW_DICTIONARY, removeVietnameseTones } from '../src/games/noi-tu/dictionary.js';
-
-function hasVietnameseDiacritics(str) {
-  return /[^\u0000-\u007F]/.test(str);
-}
-
-function syllablesMatch(sylA, sylB) {
-  if (!sylA || !sylB) return false;
-  return sylA.trim().toLowerCase().normalize('NFC') === sylB.trim().toLowerCase().normalize('NFC');
-}
-
-const wordsSet = new Set(RAW_DICTIONARY.map(w => w.trim().toLowerCase().normalize('NFC')));
-const unaccentedMap = new Map();
-for (const w of wordsSet) {
-  const noTones = removeVietnameseTones(w);
-  let list = unaccentedMap.get(noTones);
-  if (!list) {
-    list = [];
-    unaccentedMap.set(noTones, list);
-  }
-  list.push(w);
-}
-
-function resolveWord(phrase, expectedFirst = null) {
-  const clean = phrase.trim().toLowerCase().normalize('NFC').replace(/\s+/g, ' ');
-  if (!clean) return null;
-
-  if (wordsSet.has(clean)) {
-    return clean;
-  }
-
-  if (hasVietnameseDiacritics(clean)) {
-    return null;
-  }
-
-  const noTones = removeVietnameseTones(clean);
-  const candidates = unaccentedMap.get(noTones);
-  if (!candidates || candidates.length === 0) return null;
-
-  if (expectedFirst) {
-    const normExpected = expectedFirst.trim().toLowerCase().normalize('NFC');
-    const match = candidates.find(w => {
-      const parts = w.split(' ');
-      return parts.length >= 2 && parts[0] === normExpected;
-    });
-    if (match) return match;
-    return null;
-  }
-
-  return candidates[0];
-}
+import { dictionary } from '../src/games/noi-tu/dictionary.js';
 
 function validateInput(rawInput, expectedFirst) {
-  let clean = rawInput.trim().toLowerCase().normalize('NFC').replace(/\s+/g, ' ');
-  const partsCount = clean.split(' ').filter(Boolean).length;
-  if (partsCount === 1 && expectedFirst) {
-    clean = expectedFirst + ' ' + clean;
+  const parts = rawInput.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 2 && !dictionary.syllablesMatch(parts[0], expectedFirst)) {
+    return { valid: false, reason: `Chỉ cần nhập 1 tiếng nối tiếp sau "${expectedFirst}" (ví dụ: sát)!` };
   }
-  if (clean.split(' ').filter(Boolean).length !== 2) {
-    return { valid: false, reason: 'Từ phải có chính xác 2 tiếng!' };
+  if (parts.length > 2) {
+    return { valid: false, reason: `Vui lòng chỉ nhập 1 tiếng nối tiếp sau "${expectedFirst}"!` };
   }
-  const resolved = resolveWord(clean, expectedFirst);
+
+  const resolved = dictionary.resolveContinuation(rawInput, expectedFirst);
   if (!resolved) {
-    return { valid: false, reason: `Từ "${clean}" chưa có trong từ điển tiếng Việt!` };
-  }
-  const parts = resolved.split(' ');
-  if (!syllablesMatch(parts[0], expectedFirst)) {
-    return { valid: false, reason: `Tiếng đầu tiên phải là "${expectedFirst}"! Bạn đang nhập "${parts[0]}"` };
+    const attempted = parts.length === 1 ? `${expectedFirst} ${parts[0]}` : rawInput;
+    return { valid: false, reason: `Từ "${attempted}" chưa có trong từ điển tiếng Việt!` };
   }
   return { valid: true, resolved };
 }
 
 console.log('1. Target "quan", input "quân":', validateInput('quân', 'quan'));
-console.log('2. Target "quan", input "quán quân":', validateInput('quán quân', 'quan'));
-console.log('3. Target "quan", input "quân đội":', validateInput('quân đội', 'quan'));
-console.log('4. Target "quan", input "quan quân":', validateInput('quan quân', 'quan'));
-console.log('5. Target "quan", input "quan sát":', validateInput('quan sát', 'quan'));
-console.log('6. Target "quan", input "sát":', validateInput('sát', 'quan'));
-console.log('7. Target "quan", input "quan sat" (no accent):', validateInput('quan sat', 'quan'));
-console.log('8. Target "quan", input "quan quan" (no accent):', validateInput('quan quan', 'quan'));
-console.log('9. Target "quán", input "quán quân":', validateInput('quán quân', 'quán'));
-console.log('10. Target "quán", input "quan quan" (no accent):', validateInput('quan quan', 'quán'));
-console.log('11. Target "quán", input "quan sát":', validateInput('quan sát', 'quán'));
+console.log('2. Target "quan", input "sát":', validateInput('sát', 'quan'));
+console.log('3. Target "quan", input "sat" (no accent):', validateInput('sat', 'quan'));
+console.log('4. Target "quan", input "quan sát" (2 words):', validateInput('quan sát', 'quan'));
+console.log('5. Target "quan", input "quán quân" (2 words):', validateInput('quán quân', 'quan'));
+console.log('6. Target "quan", input "quân đội" (2 words):', validateInput('quân đội', 'quan'));
+console.log('7. Target "quán", input "quân":', validateInput('quân', 'quán'));
+console.log('8. Target "quán", input "trọ":', validateInput('trọ', 'quán'));
+console.log('9. Target "quán", input "tro" (no accent):', validateInput('tro', 'quán'));

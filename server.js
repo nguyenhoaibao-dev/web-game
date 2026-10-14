@@ -412,11 +412,21 @@ function handleClientMessage(ws, data) {
       if (!room || room.state !== 'PLAYING') return;
       if (room.currentTurnPlayerId !== ws.id) return;
 
-      const text = (data.text || '').trim().slice(0, 30);
+      const rawText = (data.text || '').trim();
+      let text = rawText;
+      if (text) {
+        const lastParts = dictionary.splitWords(room.currentWord);
+        const expectedFirst = lastParts ? lastParts.last : '';
+        const parts = text.split(' ').filter(Boolean);
+        if (parts.length === 1 && expectedFirst) {
+          text = `${expectedFirst} ${parts[0]}`;
+        }
+      }
+
       broadcastToRoom(room, {
         type: 'PLAYER_TYPING',
         playerId: ws.id,
-        text: text
+        text: text.slice(0, 30)
       }, ws);
       break;
     }
@@ -448,24 +458,33 @@ function handleClientMessage(ws, data) {
       };
 
       if (!clean) {
-        rejectAttempt('Chưa nhập từ nào!');
+        rejectAttempt('Chưa nhập tiếng nối tiếp nào!');
         return;
       }
 
       const lastParts = dictionary.splitWords(room.currentWord);
       const expectedFirst = lastParts ? lastParts.last : '';
 
-      // Hỗ trợ thông minh: Nếu người chơi chỉ nhập 1 tiếng (tiếng nối tiếp), tự động ghép với tiếng cần nối
-      if (dictionary.countSyllables(clean) === 1 && expectedFirst) {
-        clean = `${expectedFirst} ${clean}`;
-      }
+      const parts = clean.split(' ').filter(Boolean);
 
-      if (dictionary.countSyllables(clean) !== 2) {
-        rejectAttempt('Từ phải có chính xác 2 tiếng!');
+      // TỰ ĐỘNG GHÉP:
+      // 1. Người chơi chỉ nhập 1 tiếng nối tiếp (chuẩn theo cách chơi mới)
+      if (parts.length === 1 && expectedFirst) {
+        clean = `${expectedFirst} ${parts[0]}`;
+      } else if (parts.length === 2 && expectedFirst) {
+        // 2. Người chơi theo thói quen cũ gõ cả 2 tiếng
+        if (dictionary.syllablesMatch(parts[0], expectedFirst)) {
+          clean = `${expectedFirst} ${parts[1]}`;
+        } else {
+          rejectAttempt(`Chỉ cần nhập 1 tiếng nối tiếp sau "${expectedFirst}"!`);
+          return;
+        }
+      } else {
+        rejectAttempt(`Vui lòng chỉ nhập 1 tiếng nối tiếp sau "${expectedFirst}"!`);
         return;
       }
 
-      const resolved = dictionary.resolveWord(clean, expectedFirst);
+      const resolved = dictionary.resolveContinuation(rawInput, expectedFirst);
       if (!resolved) {
         rejectAttempt(`Từ "${clean}" chưa có trong từ điển tiếng Việt!`);
         return;

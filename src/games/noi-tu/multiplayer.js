@@ -186,9 +186,17 @@ export class MultiplayerManager {
     }
     clearTimeout(this._typingThrottleTimer);
     this._typingThrottleTimer = setTimeout(() => {
+      const trimmed = (text || '').trim();
+      let previewText = trimmed;
+      if (trimmed && this.targetSyllable) {
+        const parts = trimmed.split(' ').filter(Boolean);
+        if (parts.length === 1) {
+          previewText = `${this.targetSyllable} ${parts[0]}`;
+        }
+      }
       this.send({
         type: 'TYPING_PREVIEW',
-        text: (text || '').slice(0, 30)
+        text: previewText.slice(0, 30)
       });
     }, 80);
   }
@@ -793,37 +801,53 @@ export class MultiplayerManager {
     const input = document.getElementById('word-input');
     const sendBtn = document.getElementById('btn-send');
     const hintText = document.getElementById('hint-text');
+    const prefixWord = document.getElementById('prefix-word-text');
+    const prefixBadge = document.getElementById('input-prefix-badge');
+
+    if (prefixWord) prefixWord.textContent = this.targetSyllable || '---';
 
     const currentPlayer = this.currentRoom?.players.find(p => p.id === this.currentTurnPlayerId);
     const currentPlayerName = currentPlayer ? currentPlayer.name : 'Người chơi';
 
     if (this.isEliminated) {
+      if (prefixBadge) {
+        prefixBadge.classList.remove('active-turn');
+        prefixBadge.classList.add('disabled');
+      }
       if (input) {
         input.disabled = true;
         input.placeholder = `Bạn đang là khán giả... Đang chờ ${currentPlayerName}`;
       }
       if (sendBtn) sendBtn.disabled = true;
-      if (hintText) hintText.innerHTML = `🍿 Khán giả: Đang chờ <strong>${currentPlayerName}</strong> nối từ bắt đầu bằng "<strong>${this.targetSyllable}</strong>"`;
+      if (hintText) hintText.innerHTML = `🍿 Khán giả: Đang chờ <strong>${currentPlayerName}</strong> nối tiếp từ "<strong>${this.targetSyllable}</strong>"`;
       return;
     }
 
     if (this.isMyTurn) {
+      if (prefixBadge) {
+        prefixBadge.classList.add('active-turn');
+        prefixBadge.classList.remove('disabled');
+      }
       if (input) {
         input.disabled = false;
         input.value = '';
-        input.placeholder = `Nhập từ bắt đầu bằng: ${this.targetSyllable} ...`;
+        input.placeholder = `Nhập tiếng nối tiếp sau "${this.targetSyllable}"...`;
         input.focus();
       }
       if (sendBtn) sendBtn.disabled = false;
       if (hintText) {
-        hintText.innerHTML = `👉 <strong>ĐẾN LƯỢT BẠN!</strong> Nối từ 2 tiếng bắt đầu bằng: <strong class="highlight-syllable">${this.targetSyllable}</strong>`;
+        hintText.innerHTML = `👉 <strong>ĐẾN LƯỢT BẠN!</strong> Tiếng bắt đầu: <strong class="highlight-syllable">${this.targetSyllable}</strong> • Bạn chỉ cần gõ tiếng thứ 2!`;
       }
       sounds.playPop();
     } else {
+      if (prefixBadge) {
+        prefixBadge.classList.remove('active-turn');
+        prefixBadge.classList.add('disabled');
+      }
       if (input) {
         input.disabled = true;
         input.value = '';
-        input.placeholder = `⏳ Đang chờ ${currentPlayerName} nối từ...`;
+        input.placeholder = `⏳ Đang chờ ${currentPlayerName} nối tiếp từ "${this.targetSyllable}"...`;
       }
       if (sendBtn) sendBtn.disabled = true;
       if (hintText) {

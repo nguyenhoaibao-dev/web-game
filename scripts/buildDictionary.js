@@ -169,6 +169,57 @@ class DictionaryEngine {
     return candidates[0];
   }
 
+  /**
+   * Giải quyết tiếng nối tiếp do người dùng nhập khi đã biết expectedFirst.
+   * Tự động ghép expectedFirst + tiếng nối tiếp (hỗ trợ cả người chỉ gõ 1 tiếng hoặc gõ cả 2 tiếng).
+   */
+  resolveContinuation(rawContinuation, expectedFirst) {
+    if (!rawContinuation || !expectedFirst) return null;
+
+    const normExpected = this.normalize(expectedFirst);
+    let clean = this.normalize(rawContinuation);
+    const parts = clean.split(' ').filter(Boolean);
+
+    let secondSyllable = '';
+    let userHasDiacritics = false;
+
+    if (parts.length === 1) {
+      secondSyllable = parts[0];
+      userHasDiacritics = this.hasVietnameseDiacritics(secondSyllable);
+    } else if (parts.length === 2) {
+      if (this.syllablesMatch(parts[0], normExpected)) {
+        secondSyllable = parts[1];
+        userHasDiacritics = this.hasVietnameseDiacritics(parts[1]);
+      } else {
+        return null; // Người dùng gõ 2 tiếng mà tiếng đầu không khớp
+      }
+    } else {
+      return null;
+    }
+
+    const exactCompound = `${normExpected} ${secondSyllable}`;
+
+    // 1. Nếu từ ghép tạo thành có chính xác trong từ điển
+    if (this.wordsSet.has(exactCompound)) {
+      return exactCompound;
+    }
+
+    // 2. Nếu người dùng đã gõ có dấu nhưng từ ghép không tồn tại -> không tự ý sửa dấu
+    if (userHasDiacritics) {
+      return null;
+    }
+
+    // 3. Người dùng gõ không dấu (ASCII thuần)
+    const normSecondAscii = removeVietnameseTones(secondSyllable);
+    const candidates = this.findCandidates(normExpected, new Set());
+    const matched = candidates.find(w => {
+      const wParts = this.splitWords(w);
+      return wParts && removeVietnameseTones(wParts.last) === normSecondAscii;
+    });
+
+    return matched || null;
+  }
+
   isValid(phrase) {
     return this.resolveWord(phrase) !== null;
   }
