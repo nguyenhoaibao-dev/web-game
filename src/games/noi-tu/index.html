@@ -118,7 +118,8 @@
 
   <!-- 3. Khu vực Nhập liệu (Bottom Bar) -->
   <footer class="game-input-container">
-    <div class="target-hint-box">
+    <!-- Dòng từ trước đã ẩn theo yêu cầu người dùng để tiết kiệm không gian bàn đấu -->
+    <div class="target-hint-box" style="display: none !important;" aria-hidden="true">
       <span id="hint-text">Đang tải lượt chơi...</span>
       <button class="btn-giveup-neu" id="btn-giveup" style="display: none;" title="Bỏ cuộc vì bí từ">🏳️ Bí từ</button>
     </div>

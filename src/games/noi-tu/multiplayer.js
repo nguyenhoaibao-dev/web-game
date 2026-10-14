@@ -691,10 +691,8 @@ export class MultiplayerManager {
       } else {
         if (isDead) {
           statusBadge = '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>';
-        } else if (isTurn) {
-          statusBadge = '<span class="seat-status-badge seat-status-turn">👉 Đến lượt</span>';
         } else {
-          statusBadge = '<span class="seat-status-badge">⏳ Chờ</span>';
+          statusBadge = '';
         }
       }
 
@@ -727,7 +725,7 @@ export class MultiplayerManager {
               ${isHost ? '<span class="seat-host-badge" title="Chủ bàn">👑</span>' : ''}
             </div>
             <span class="seat-win-badge" title="Số vòng đấu đã thắng">🏆 ${p.wins || 0} thắng</span>
-            ${isLobby ? statusBadge : (isDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : (isTurn ? '<span class="seat-status-badge seat-status-turn">👉 Đến lượt</span>' : ''))}
+            ${isLobby ? statusBadge : (isDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : '')}
           </div>
         </div>
       `;

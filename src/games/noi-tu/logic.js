@@ -340,16 +340,22 @@ export class WordChainGame {
     };
 
     const activateKeyboard = () => {
+      const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty('--keyboard-viewport-height', `${vvHeight}px`);
+      document.documentElement.classList.add('keyboard-active');
       document.body.classList.add('keyboard-active');
       lockScroll();
-      [40, 120, 250, 450].forEach(delay => setTimeout(lockScroll, delay));
+      requestAnimationFrame(lockScroll);
+      [40, 100, 200, 350, 500].forEach(delay => setTimeout(lockScroll, delay));
     };
 
     const deactivateKeyboard = () => {
       setTimeout(() => {
         const isStillInput = document.activeElement === this.elInput || document.activeElement === this.chatTextInput;
         if (!isStillInput) {
+          document.documentElement.classList.remove('keyboard-active');
           document.body.classList.remove('keyboard-active');
+          document.documentElement.style.removeProperty('--keyboard-viewport-height');
           document.body.style.height = '';
           lockScroll();
         }
@@ -371,16 +377,21 @@ export class WordChainGame {
       const handleVisualResize = () => {
         const vvHeight = window.visualViewport.height;
         const screenH = window.screen.height || window.innerHeight;
-        const isHeightShrunk = vvHeight < (screenH * 0.8);
+        const isHeightShrunk = vvHeight < (screenH * 0.85);
         const isInputFocused = document.activeElement === this.elInput || document.activeElement === this.chatTextInput;
         const isKeyboardOpen = isHeightShrunk || isInputFocused;
 
+        document.documentElement.style.setProperty('--keyboard-viewport-height', `${vvHeight}px`);
+        document.documentElement.classList.toggle('keyboard-active', isKeyboardOpen);
         document.body.classList.toggle('keyboard-active', isKeyboardOpen);
+
         if (isKeyboardOpen) {
           document.body.style.height = `${vvHeight}px`;
           lockScroll();
+          requestAnimationFrame(lockScroll);
         } else {
           document.body.style.height = '';
+          document.documentElement.style.removeProperty('--keyboard-viewport-height');
         }
       };
 
@@ -843,7 +854,7 @@ export class WordChainGame {
               <span class="seat-name">Bot Thông Thái</span>
             </div>
             <span class="seat-win-badge" title="Số vòng thắng">🏆 ${this.botWins || 0} thắng</span>
-            ${isBotDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : (isBotTurn ? '<span class="seat-status-badge seat-status-turn">⚡ Đang nghĩ</span>' : '')}
+            ${isBotDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : ''}
           </div>
         </div>
       `;
@@ -879,7 +890,7 @@ export class WordChainGame {
               <span class="seat-name">${this.player.name || 'Người Chơi'} (Bạn)</span>
             </div>
             <span class="seat-win-badge" title="Số vòng thắng">🏆 ${this.userWins || 0} thắng</span>
-            ${isUserDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : (isPlayerTurn ? '<span class="seat-status-badge seat-status-turn">👉 Đến lượt</span>' : '')}
+            ${isUserDead ? '<span class="seat-status-badge seat-status-dead">❌ Đã loại</span>' : ''}
           </div>
         </div>
       `;
