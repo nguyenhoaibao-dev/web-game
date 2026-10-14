@@ -230,6 +230,15 @@ export class MultiplayerManager {
     this.send({ type: 'GIVE_UP' });
   }
 
+  sendChat(text) {
+    const clean = (text || '').trim().slice(0, 70);
+    if (!clean) return;
+    this.send({
+      type: 'CHAT_MESSAGE',
+      text: clean
+    });
+  }
+
   returnToLobby() {
     this.send({ type: 'RETURN_TO_LOBBY' });
   }
@@ -331,6 +340,11 @@ export class MultiplayerManager {
             this.clearSeatBubble(msg.playerId, 'typing');
           }
         }
+        break;
+
+      case 'PLAYER_CHAT':
+        this.showSeatBubble(msg.playerId, msg.text, 'chat', '', 7000);
+        sounds.playPop();
         break;
 
       case 'NEXT_TURN':
@@ -669,11 +683,12 @@ export class MultiplayerManager {
       let bubbleHtml = '';
       const activeBubble = this.activeBubbles.get(p.id);
       if (activeBubble && activeBubble.expiresAt > Date.now()) {
-        const icon = activeBubble.status === 'correct' ? '✅' : (activeBubble.status === 'wrong' ? '❌' : '✍️');
+        const icon = activeBubble.status === 'chat' ? '💬' : (activeBubble.status === 'correct' ? '✅' : (activeBubble.status === 'wrong' ? '❌' : '✍️'));
+        const displayText = activeBubble.status === 'chat' ? activeBubble.text : `"${activeBubble.text}"`;
         const detailBadge = activeBubble.detail ? `<span class="bubble-badge">${activeBubble.detail}</span>` : '';
         bubbleHtml = `
           <div class="seat-speech-bubble ${activeBubble.status}">
-            <span class="bubble-word">${icon} "${activeBubble.text}"</span>
+            <span class="bubble-word">${icon} ${displayText}</span>
             ${detailBadge}
           </div>
         `;
@@ -908,12 +923,12 @@ export class MultiplayerManager {
   }
 
   /**
-   * Hiển thị bóng thoại trên ghế người chơi (Đúng, Sai, hoặc Đang gõ)
+   * Hiển thị bóng thoại trên ghế người chơi (Đúng, Sai, Đang gõ, hoặc Chat 7s)
    */
-  showSeatBubble(playerId, text, status = 'correct', detail = '') {
+  showSeatBubble(playerId, text, status = 'correct', detail = '', customDuration = null) {
     if (!playerId) return;
 
-    const duration = status === 'wrong' ? 3200 : (status === 'typing' ? 2200 : 2600);
+    const duration = customDuration || (status === 'chat' ? 7000 : (status === 'wrong' ? 3200 : (status === 'typing' ? 2200 : 2600)));
     const expiresAt = Date.now() + duration;
 
     this.activeBubbles.set(playerId, {
@@ -927,12 +942,13 @@ export class MultiplayerManager {
     if (container) {
       if (container._bubbleTimer) clearTimeout(container._bubbleTimer);
 
-      const icon = status === 'correct' ? '✅' : (status === 'wrong' ? '❌' : '✍️');
+      const icon = status === 'chat' ? '💬' : (status === 'correct' ? '✅' : (status === 'wrong' ? '❌' : '✍️'));
+      const displayText = status === 'chat' ? text : `"${text}"`;
       const detailBadge = detail ? `<span class="bubble-badge">${detail}</span>` : '';
 
       container.innerHTML = `
         <div class="seat-speech-bubble ${status}">
-          <span class="bubble-word">${icon} "${text}"</span>
+          <span class="bubble-word">${icon} ${displayText}</span>
           ${detailBadge}
         </div>
       `;

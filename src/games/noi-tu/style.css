@@ -701,6 +701,34 @@ body {
   border-color: transparent transparent var(--border-c);
 }
 
+/* Tin nhắn Chat: Nền vàng cam nổi bật theo yêu cầu (hiện trong 7s) */
+.seat-speech-bubble.chat {
+  background-color: #ffedd5; /* Vàng cam ấm áp Orange 100 */
+  color: #9a3412; /* Chữ cam nâu đậm Orange 900 */
+  border: 2px solid #f97316; /* Viền cam rực rỡ Orange 500 */
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.32);
+  white-space: normal;
+  max-width: 220px;
+  line-height: 1.35;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-weight: 700;
+  animation: bubblePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.seat-speech-bubble.chat::after {
+  border-color: #f97316 transparent transparent;
+}
+.top-seats .seat-speech-bubble.chat::after {
+  border-color: transparent transparent #f97316;
+}
+.table-side-seat.left-seat .seat-speech-bubble.chat::after {
+  border-color: transparent #f97316 transparent transparent;
+}
+.table-side-seat.right-seat .seat-speech-bubble.chat::after {
+  border-color: transparent transparent transparent #f97316;
+}
+
 /* Ghế bên trái (9h) - bong bóng chỉ sang phải vào tâm bàn */
 .table-side-seat.left-seat .seat-bubble-container {
   top: 50%;
@@ -1156,6 +1184,148 @@ body {
   cursor: not-allowed;
   background-color: #94a3b8;
   border-color: #94a3b8;
+}
+
+/* Nút Icon Chat cạnh nút Gửi */
+.btn-chat-toggle {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  background-color: #fff7ed;
+  border: 1.5px solid #fdba74;
+  border-radius: 10px;
+  color: #ea580c;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-chat-toggle:hover {
+  background-color: #ffedd5;
+  border-color: #f97316;
+  transform: translateY(-1px);
+}
+
+.btn-chat-toggle.active {
+  background-color: #f97316;
+  border-color: #ea580c;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
+}
+
+/* Khung Popover Chat Nổi Bật (Màu vàng cam) */
+.chat-popover-box {
+  background-color: #ffffff;
+  border: 1.5px solid #fdba74;
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fadeIn 0.18s ease-out;
+  margin-bottom: 4px;
+}
+
+.quick-chat-chips {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.quick-chat-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-chip {
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #9a3412;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.quick-chip:hover {
+  background-color: #ffedd5;
+  border-color: #f97316;
+  transform: translateY(-1px);
+}
+
+.chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-text-input {
+  flex: 1;
+  padding: 7px 12px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1.5px solid #fed7aa;
+  border-radius: 8px;
+  outline: none;
+  background-color: #fffaf5;
+  color: #7c2d12;
+  transition: all 0.15s ease;
+}
+
+.chat-text-input:focus {
+  border-color: #f97316;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+.btn-chat-send {
+  padding: 7px 12px;
+  background-color: #f97316;
+  border: 1px solid #ea580c;
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-chat-send:hover {
+  background-color: #ea580c;
+}
+
+.btn-chat-close {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  color: #9a3412;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-chat-close:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+  color: #ef4444;
 }
 
 /* ============================================================

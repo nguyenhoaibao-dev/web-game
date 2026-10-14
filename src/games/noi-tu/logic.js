@@ -88,6 +88,13 @@ export class WordChainGame {
     this.btnChooseBot = document.getElementById('btn-choose-bot');
     this.btnChooseMulti = document.getElementById('btn-choose-multi');
 
+    // Chat elements
+    this.btnToggleChat = document.getElementById('btn-toggle-chat');
+    this.chatPopover = document.getElementById('chat-popover-box');
+    this.chatTextInput = document.getElementById('chat-text-input');
+    this.btnSendChat = document.getElementById('btn-send-chat');
+    this.btnCloseChat = document.getElementById('btn-close-chat');
+
     // Multiplayer Manager
     this.mpManager = new MultiplayerManager(this);
 
@@ -148,6 +155,41 @@ export class WordChainGame {
           this.updatePlayerName(clean);
         }
       }
+    });
+
+    // ============================================
+    // BẮT SỰ KIỆN CHO TÍNH NĂNG CHAT (VÀNG CAM 7S)
+    // ============================================
+    this.btnToggleChat?.addEventListener('click', () => {
+      const isVisible = this.chatPopover?.style.display === 'flex';
+      if (isVisible) {
+        this.closeChatPopover();
+      } else {
+        this.openChatPopover();
+      }
+    });
+
+    this.btnCloseChat?.addEventListener('click', () => {
+      this.closeChatPopover();
+    });
+
+    this.btnSendChat?.addEventListener('click', () => {
+      this.sendChatMessage(this.chatTextInput?.value || '');
+    });
+
+    this.chatTextInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.sendChatMessage(this.chatTextInput?.value || '');
+      }
+    });
+
+    // Bắt sự kiện các chip chat nhanh
+    document.querySelectorAll('.quick-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const msg = btn.getAttribute('data-msg') || btn.textContent;
+        this.sendChatMessage(msg);
+      });
     });
 
     // Submit form (dùng chung cho cả solo và multi)
@@ -305,6 +347,71 @@ export class WordChainGame {
         window.scrollTo(0, 0);
       });
     }
+  }
+
+  /**
+   * Mở khung nhập tin nhắn chat
+   */
+  openChatPopover() {
+    if (this.chatPopover) {
+      this.chatPopover.style.display = 'flex';
+    }
+    if (this.btnToggleChat) {
+      this.btnToggleChat.classList.add('active');
+    }
+    if (this.chatTextInput) {
+      this.chatTextInput.focus();
+    }
+  }
+
+  /**
+   * Đóng khung nhập tin nhắn chat
+   */
+  closeChatPopover() {
+    if (this.chatPopover) {
+      this.chatPopover.style.display = 'none';
+    }
+    if (this.btnToggleChat) {
+      this.btnToggleChat.classList.remove('active');
+    }
+  }
+
+  /**
+   * Gửi tin nhắn chat và hiển thị bong bóng nổi màu vàng cam 7s trên avatar
+   */
+  sendChatMessage(text) {
+    const clean = (text || '').trim().slice(0, 70);
+    if (!clean) return;
+
+    if (this.mode === 'multi') {
+      this.mpManager.sendChat(clean);
+    } else {
+      // Chế độ Solo với Bot: nổi trên avatar Bạn trong 7s
+      this.showSoloSeatBubble('user', clean, 'chat', '', 7000);
+      sounds.playPop();
+
+      // Bot ngẫu nhiên phản hồi sau 1.2s - 1.8s để tạo cảm giác sống động
+      const botReplies = [
+        "Cứ bình tĩnh bạn ơi! 🤖",
+        "Từ này khó đấy nha! 🧐",
+        "Đang tập trung suy nghĩ nè... ⏳",
+        "Chơi đỉnh thật đấy! 🔥",
+        "Haha tiếp tục nào! 👏",
+        "Đố bạn nối thắng được tớ! 😆"
+      ];
+      setTimeout(() => {
+        if (!this.isGameOver) {
+          const reply = botReplies[Math.floor(Math.random() * botReplies.length)];
+          this.showSoloSeatBubble('bot', reply, 'chat', '', 7000);
+          sounds.playPop();
+        }
+      }, 1400);
+    }
+
+    if (this.chatTextInput) {
+      this.chatTextInput.value = '';
+    }
+    this.closeChatPopover();
   }
 
   /**
@@ -648,11 +755,12 @@ export class WordChainGame {
       let botBubbleHtml = '';
       const activeBot = this.activeSoloBubbles.get('bot');
       if (activeBot && activeBot.expiresAt > Date.now()) {
-        const icon = activeBot.status === 'correct' ? '✅' : (activeBot.status === 'wrong' ? '❌' : '✍️');
+        const icon = activeBot.status === 'chat' ? '💬' : (activeBot.status === 'correct' ? '✅' : (activeBot.status === 'wrong' ? '❌' : '✍️'));
+        const displayText = activeBot.status === 'chat' ? activeBot.text : `"${activeBot.text}"`;
         const detailBadge = activeBot.detail ? `<span class="bubble-badge">${activeBot.detail}</span>` : '';
         botBubbleHtml = `
           <div class="seat-speech-bubble ${activeBot.status}">
-            <span class="bubble-word">${icon} "${activeBot.text}"</span>
+            <span class="bubble-word">${icon} ${displayText}</span>
             ${detailBadge}
           </div>
         `;
@@ -683,11 +791,12 @@ export class WordChainGame {
       let userBubbleHtml = '';
       const activeUser = this.activeSoloBubbles.get('user');
       if (activeUser && activeUser.expiresAt > Date.now()) {
-        const icon = activeUser.status === 'correct' ? '✅' : (activeUser.status === 'wrong' ? '❌' : '✍️');
+        const icon = activeUser.status === 'chat' ? '💬' : (activeUser.status === 'correct' ? '✅' : (activeUser.status === 'wrong' ? '❌' : '✍️'));
+        const displayText = activeUser.status === 'chat' ? activeUser.text : `"${activeUser.text}"`;
         const detailBadge = activeUser.detail ? `<span class="bubble-badge">${activeUser.detail}</span>` : '';
         userBubbleHtml = `
           <div class="seat-speech-bubble ${activeUser.status}">
-            <span class="bubble-word">${icon} "${activeUser.text}"</span>
+            <span class="bubble-word">${icon} ${displayText}</span>
             ${detailBadge}
           </div>
         `;
@@ -880,11 +989,11 @@ export class WordChainGame {
   }
 
   /**
-   * Hiển thị bóng thoại trên ghế người chơi hoặc Bot ở chế độ Solo
+   * Hiển thị bóng thoại trên ghế người chơi hoặc Bot ở chế độ Solo (hỗ trợ chat 7s màu vàng cam)
    */
-  showSoloSeatBubble(target, text, status = 'correct', detail = '') {
+  showSoloSeatBubble(target, text, status = 'correct', detail = '', customDuration = null) {
     if (!target) return;
-    const duration = status === 'wrong' ? 3200 : (status === 'typing' ? 2200 : 2600);
+    const duration = customDuration || (status === 'chat' ? 7000 : (status === 'wrong' ? 3200 : (status === 'typing' ? 2200 : 2600)));
     const expiresAt = Date.now() + duration;
 
     this.activeSoloBubbles.set(target, {
@@ -899,12 +1008,13 @@ export class WordChainGame {
     if (container) {
       if (container._bubbleTimer) clearTimeout(container._bubbleTimer);
 
-      const icon = status === 'correct' ? '✅' : (status === 'wrong' ? '❌' : '✍️');
+      const icon = status === 'chat' ? '💬' : (status === 'correct' ? '✅' : (status === 'wrong' ? '❌' : '✍️'));
+      const displayText = status === 'chat' ? text : `"${text}"`;
       const detailBadge = detail ? `<span class="bubble-badge">${detail}</span>` : '';
 
       container.innerHTML = `
         <div class="seat-speech-bubble ${status}">
-          <span class="bubble-word">${icon} "${text}"</span>
+          <span class="bubble-word">${icon} ${displayText}</span>
           ${detailBadge}
         </div>
       `;
@@ -925,6 +1035,78 @@ export class WordChainGame {
           this.activeSoloBubbles.delete(target);
         }
       }, duration);
+    }
+  }
+
+  /**
+   * Mở popover nhập tin nhắn chat & autofocus để bật bàn phím
+   */
+  openChatPopover() {
+    if (!this.chatPopover) return;
+    this.chatPopover.style.display = 'flex';
+    if (this.btnToggleChat) {
+      this.btnToggleChat.classList.add('active');
+    }
+    setTimeout(() => {
+      if (this.chatTextInput) {
+        this.chatTextInput.focus();
+        this.chatTextInput.select();
+      }
+    }, 50);
+  }
+
+  /**
+   * Đóng popover nhập chat
+   */
+  closeChatPopover() {
+    if (!this.chatPopover) return;
+    this.chatPopover.style.display = 'none';
+    if (this.btnToggleChat) {
+      this.btnToggleChat.classList.remove('active');
+    }
+  }
+
+  /**
+   * Gửi tin nhắn chat
+   */
+  sendChatMessage(rawText) {
+    const cleanText = (rawText || '').trim().slice(0, 65);
+    if (!cleanText) return;
+
+    if (this.chatTextInput) {
+      this.chatTextInput.value = '';
+    }
+    this.closeChatPopover();
+
+    sounds.playPop();
+
+    if (this.mode === 'multi') {
+      if (this.mpManager) {
+        this.mpManager.sendChat(cleanText);
+      }
+    } else {
+      // Chế độ Solo với Bot: nổi lên trên avatar của User trong 7 giây
+      this.showSoloSeatBubble('user', cleanText, 'chat', '', 7000);
+
+      // Bot ngẫu nhiên phản hồi câu đối đáp để tăng tính sinh động
+      if (!this.isGameOver) {
+        const botResponses = [
+          'Haha cùng cố gắng nha! 😄',
+          'Đang suy nghĩ từ nè! 🤔',
+          'Từ này hay đó nha! 🔥',
+          'Nhanh tay lên bạn ơi! ⏱️',
+          'Quyết đấu tới cùng nào! ⚔️',
+          'Tôi sắp nghĩ ra từ độc lạ rồi! 😎'
+        ];
+        clearTimeout(this._botChatTimeout);
+        this._botChatTimeout = setTimeout(() => {
+          if (!this.isGameOver) {
+            const randomBotMsg = botResponses[Math.floor(Math.random() * botResponses.length)];
+            this.showSoloSeatBubble('bot', randomBotMsg, 'chat', '', 7000);
+            sounds.playPop();
+          }
+        }, 1200 + Math.random() * 800);
+      }
     }
   }
 

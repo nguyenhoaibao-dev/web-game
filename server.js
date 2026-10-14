@@ -431,6 +431,36 @@ function handleClientMessage(ws, data) {
       break;
     }
 
+    case 'CHAT_MESSAGE': {
+      if (!ws.roomCode) return;
+      const room = rooms.get(ws.roomCode);
+      if (!room) return;
+
+      const player = room.players.find(p => p.id === ws.id);
+      if (!player) return;
+
+      // Chống spam (rate limit 400ms)
+      const now = Date.now();
+      if (ws._lastChatTime && (now - ws._lastChatTime < 400)) {
+        return;
+      }
+      ws._lastChatTime = now;
+
+      const rawText = (data.text || '').trim();
+      if (!rawText) return;
+
+      const cleanText = rawText.slice(0, 70);
+
+      broadcastToRoom(room, {
+        type: 'PLAYER_CHAT',
+        playerId: ws.id,
+        playerName: player.name,
+        avatar: player.avatar,
+        text: cleanText
+      });
+      break;
+    }
+
     case 'SUBMIT_WORD': {
       if (!ws.roomCode) return;
       const room = rooms.get(ws.roomCode);

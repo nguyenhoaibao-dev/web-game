@@ -123,6 +123,34 @@
       <button class="btn-giveup-neu" id="btn-giveup" style="display: none;" title="Bỏ cuộc vì bí từ">🏳️ Bí từ</button>
     </div>
 
+    <!-- Khung Nhập Tin Nhắn Chat Nổi Bật (Màu vàng cam) -->
+    <div class="chat-popover-box" id="chat-popover-box" style="display: none;">
+      <!-- Câu chat nhanh / emoji -->
+      <div class="quick-chat-chips">
+        <button type="button" class="quick-chip" data-msg="Haha 😂">Haha 😂</button>
+        <button type="button" class="quick-chip" data-msg="Nhanh lên bạn ơi! ⏱️">Nhanh lên ⏱️</button>
+        <button type="button" class="quick-chip" data-msg="Từ này khó quá! 🤯">Khó quá 🤯</button>
+        <button type="button" class="quick-chip" data-msg="Đỉnh thật sự! 🔥">Đỉnh thật 🔥</button>
+        <button type="button" class="quick-chip" data-msg="Bí từ rồi 🏳️">Bí từ 🏳️</button>
+      </div>
+      <div class="chat-input-row">
+        <input 
+          type="text" 
+          class="chat-text-input" 
+          id="chat-text-input" 
+          placeholder="Nhập tin nhắn chat (hiện 7s)..." 
+          maxlength="65"
+          autocomplete="off"
+        />
+        <button type="button" class="btn-chat-send" id="btn-send-chat" title="Gửi tin nhắn">
+          Gửi 💬
+        </button>
+        <button type="button" class="btn-chat-close" id="btn-close-chat" title="Đóng chat">
+          ✕
+        </button>
+      </div>
+    </div>
+
     <div class="input-form">
       <div class="input-prefix-badge" id="input-prefix-badge" title="Tiếng bắt đầu cố định">
         <span class="prefix-icon">🔗</span>
@@ -140,6 +168,10 @@
       />
       <button class="btn-send-word" id="btn-send" title="Gửi từ">
         GỬI 🚀
+      </button>
+      <!-- Nút Icon Chat bên cạnh nút Gửi -->
+      <button type="button" class="btn-chat-toggle" id="btn-toggle-chat" title="Mở hộp chat nhanh">
+        💬
       </button>
     </div>
   </footer>
