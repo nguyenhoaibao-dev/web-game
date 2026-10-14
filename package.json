@@ -4,5 +4,9 @@
   "type": "module",
   "dependencies": {
     "ws": "^8.22.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "build:dict": "node scripts/buildDictionary.js"
   }
 }

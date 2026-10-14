@@ -78,7 +78,7 @@ my-arcade-web/
      - Thể thức **Sinh tồn / Loại trực tiếp (Elimination)**: Ai hết giờ hoặc nối sai/lặp từ sẽ bị loại ngay lập tức, chuyển sang chế độ Khán giả.
      - Người sống sót cuối cùng là **Quán quân Vô địch** 👑🏆, nhận thưởng 50 Xu và vinh danh trên bục podium!
    - Hỗ trợ cả gõ tiếng Việt có dấu và không dấu (tự động nhận diện và chuẩn hóa dấu).
-   - Tra cứu tiền tố tức thì `O(1)` với bộ từ vựng phong phú.
+   - Tra cứu tiền tố tức thì `O(1)` với kho từ vựng khổng lồ hơn **35.000+ từ ghép tiếng Việt** chuẩn hóa (tích hợp từ các nguồn từ điển Hồ Ngọc Đức, Viet39K, Viet22K, Viet11K).
 
 3. **Mini-game Rắn Săn Mồi Bự (Snake)**:
    - Đồ họa bàn cờ caro cartoonish, chú rắn mắt to tròn, táo đỏ mọng nước.

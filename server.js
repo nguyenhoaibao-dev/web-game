@@ -434,7 +434,7 @@ function handleClientMessage(ws, data) {
       }
 
       const rawInput = (data.word || '').trim();
-      const clean = dictionary.normalize(rawInput);
+      let clean = dictionary.normalize(rawInput);
 
       const rejectAttempt = (reason) => {
         const attemptWord = rawInput || clean || '---';
@@ -452,23 +452,29 @@ function handleClientMessage(ws, data) {
         return;
       }
 
+      const lastParts = dictionary.splitWords(room.currentWord);
+      const expectedFirst = lastParts ? lastParts.last : '';
+
+      // Hỗ trợ thông minh: Nếu người chơi chỉ nhập 1 tiếng (tiếng nối tiếp), tự động ghép với tiếng cần nối
+      if (dictionary.countSyllables(clean) === 1 && expectedFirst) {
+        clean = `${expectedFirst} ${clean}`;
+      }
+
       if (dictionary.countSyllables(clean) !== 2) {
         rejectAttempt('Từ phải có chính xác 2 tiếng!');
         return;
       }
 
-      const resolved = dictionary.resolveWord(clean);
+      const resolved = dictionary.resolveWord(clean, expectedFirst);
       if (!resolved) {
         rejectAttempt(`Từ "${clean}" chưa có trong từ điển tiếng Việt!`);
         return;
       }
 
-      const lastParts = dictionary.splitWords(room.currentWord);
-      const expectedFirst = lastParts ? lastParts.last : '';
       const currParts = dictionary.splitWords(resolved);
 
       if (!currParts || !dictionary.syllablesMatch(currParts.first, expectedFirst)) {
-        rejectAttempt(`Tiếng đầu tiên phải là "${expectedFirst}"!`);
+        rejectAttempt(`Tiếng đầu tiên phải là "${expectedFirst}"! Bạn đang nhập "${currParts ? currParts.first : ''}"`);
         return;
       }
 

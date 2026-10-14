@@ -808,7 +808,15 @@ export class WordChainGame {
       return;
     }
 
-    const cleanInput = dictionary.normalize(rawInput);
+    let cleanInput = dictionary.normalize(rawInput);
+    const lastWordParts = dictionary.splitWords(this.currentWord);
+    const expectedFirstSyllable = lastWordParts ? lastWordParts.last : '';
+
+    // Hỗ trợ thông minh: Nếu người chơi chỉ nhập 1 tiếng nối tiếp (ví dụ chỉ gõ "sát" khi tiếng cần nối là "quan"),
+    // hệ thống tự động ghép thành "quan sát"
+    if (dictionary.countSyllables(cleanInput) === 1 && expectedFirstSyllable) {
+      cleanInput = `${expectedFirstSyllable} ${cleanInput}`;
+    }
 
     // 1. Kiểm tra số tiếng
     if (dictionary.countSyllables(cleanInput) !== 2) {
@@ -817,22 +825,19 @@ export class WordChainGame {
       return;
     }
 
-    // 2. Nhận diện từ trong từ điển (hỗ trợ cả có dấu và không dấu)
-    const matchedWord = dictionary.resolveWord(cleanInput);
+    // 2. Nhận diện từ trong từ điển (gắn chặt với expectedFirstSyllable để không bao giờ bị lệch dấu)
+    const matchedWord = dictionary.resolveWord(cleanInput, expectedFirstSyllable);
     if (!matchedWord) {
       this.showSoloSeatBubble('user', rawInput, 'wrong', 'Không có trong từ điển');
       this.showInputError(`Từ "${cleanInput}" chưa có trong từ điển tiếng Việt!`);
       return;
     }
 
-    // 3. Kiểm tra tiếng đầu tiên trùng tiếng cuối của bot
-    const lastWordParts = dictionary.splitWords(this.currentWord);
-    const expectedFirstSyllable = lastWordParts ? lastWordParts.last : '';
+    // 3. Kiểm tra tiếng đầu tiên trùng tiếng cuối của từ trước (chính xác cả dấu)
     const inputParts = dictionary.splitWords(matchedWord);
-
     if (!inputParts || !dictionary.syllablesMatch(inputParts.first, expectedFirstSyllable)) {
       this.showSoloSeatBubble('user', rawInput, 'wrong', `Phải bắt đầu bằng "${expectedFirstSyllable}"`);
-      this.showInputError(`Tiếng đầu tiên phải là "${expectedFirstSyllable}"!`);
+      this.showInputError(`Tiếng đầu tiên phải là "${expectedFirstSyllable}"! Bạn đang nhập "${inputParts ? inputParts.first : ''}"`);
       return;
     }
 
